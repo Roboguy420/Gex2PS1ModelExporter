@@ -1,6 +1,9 @@
 # Gex 2 PS1 Model Exporter
 This is a simple command line program written in C++ that exports Gex 2 PS1 model files. This is my first ever C++ program so it's a little rough around the edges and has some novice bits of code, but at the end of the day it works and I'm glad it does.
 
+## Download
+Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1ModelExporter/releases). Download the latest release for your OS to get all the latest features.
+
 ## Usage
 There are 3 parameters in the program, 1 is needed needed and the other 2 are optional.
 
@@ -8,7 +11,7 @@ The 1st parameter is the **input file**. This is the model file from gex 2 (exte
 
 The 2nd parameter is the **output folder**. This is the folder where the models will be output. Note that this does not create a folder with the name of the parameter; the folder must be preexisting in order to work. If there is no 2nd parameter, it uses the current working directory.
 
-The 3rd parameter is the **model index**. This is the index of whichever model you want to export. The value -1 is reserved for exporting everything. The value 0 is reserved for the level geometry. Any value >0 is used for the several other models stored in the input file. If there is no 3rd parameter, it defaults to exporting everything.
+The 3rd parameter is the **model index**. This is the index of whichever model you want to export. The value -1 is reserved for exporting everything. The value 0 is reserved for the level geometry (currently unimplemented so it exports nothing). Any value >0 is used for the several other models stored in the input file. If there is no 3rd parameter, it defaults to exporting everything.
 
 Usage on the command line is as follows:
 ```
