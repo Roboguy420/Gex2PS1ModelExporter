@@ -33,6 +33,7 @@ This program requires:
 * [TinyXML2](https://github.com/leethomason/tinyxml2) to make the DAE files
 * [CMake](https://cmake.org) to build
 * [Clang](https://clang.llvm.org) to compile
+
 Install CMake if you haven't already and clone the TinyXML2 repository onto your computer.
 
 If you're sticking with using Visual Studio as the CMake generator, go to the Visual Studio Installer and install the _C++ Clang Compiler for Windows_ and _MSBuild support for LLVM (clang-cl) toolset_ found under Individual components.

@@ -2,7 +2,7 @@
 
 #include "Gex2PS1ModelExporter.h"
 
-//"Intermediary" model structures that can't directly be put into Assimp
+//"Intermediary" model structures
 
 struct Vertex
 {
@@ -22,10 +22,16 @@ struct Bone
 	unsigned short int parentID;
 };
 
+struct UV
+{
+	short int u, v;
+};
+
 struct PolygonStruct
 {
 	Vertex v1, v2, v3;
 	unsigned int materialID;
+	UV uv1, uv2, uv3;
 };
 
 struct Material
