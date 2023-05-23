@@ -15,11 +15,12 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
-		return -1;
+		//return -1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
 	}
-	std::string inputFile = argv[1];
+	//std::string inputFile = argv[1];
+	std::string inputFile = "map5.drm";
 	std::string outputFolder;
 
 	//Selected export -1 = everything
@@ -270,34 +271,66 @@ float* UVPointCorrection(byte v1U, byte v1V, byte v2U, byte v2V, byte v3U, byte 
 		hingeIndex = lowestPointIndex;
 	}
 
-	float translationU;
-	float translationV;
-	if (hingeIndex == highestPointIndex)
+	uAxis[farRightPointIndex] = 255.0f;
+	uAxis[farLeftPointIndex] = 0.0f;
+	vAxis[highestPointIndex] = 255.0f;
+	vAxis[lowestPointIndex] = 0.0f;
+
+	if (hingeIndex == highestPointIndex && hingeIndex == farLeftPointIndex)
 	{
-		translationV = 255 - vAxis[hingeIndex];
+		uAxis[hingeIndex] = 0.0f;
+		vAxis[hingeIndex] = 255.0f;
+		vAxis[farRightPointIndex] = 255.0f;
+		uAxis[lowestPointIndex] = 0.0f;
+	}
+	else if (hingeIndex == highestPointIndex && hingeIndex == farRightPointIndex)
+	{
+		uAxis[hingeIndex] = 255.0f;
+		vAxis[hingeIndex] = 255.0f;
+		vAxis[farLeftPointIndex] = 255.0f;
+		uAxis[lowestPointIndex] = 255.0f;
+	}
+	else if (hingeIndex == lowestPointIndex && hingeIndex == farLeftPointIndex)
+	{
+		uAxis[hingeIndex] = 0.0f;
+		vAxis[hingeIndex] = 0.0f;
+		vAxis[farRightPointIndex] = 0.0f;
+		uAxis[highestPointIndex] = 0.0f;
 	}
 	else
 	{
-		translationV = -vAxis[hingeIndex];
-	}
-	if (hingeIndex == farRightPointIndex)
-	{
-		translationU = 255 - uAxis[hingeIndex];
-	}
-	else
-	{
-		translationU = -uAxis[hingeIndex];
+		uAxis[hingeIndex] = 255.0f;
+		vAxis[hingeIndex] = 0.0f;
+		vAxis[farLeftPointIndex] = 0.0f;
+		uAxis[highestPointIndex] = 255.0f;
 	}
 
-	for (int i = 0; i < 3; i++)
-	{
-		uAxis[i] += translationU;
-		vAxis[i] += translationV;
-	}
+	float newUVCoords[6] = {uAxis[0], vAxis[0], uAxis[1], vAxis[1], uAxis[2], vAxis[2]};
 
-	float multiplier;
-	unsigned int extremeValueIndex;
-	bool extremeValueAxis = true; //false = U, true = V
+	return newUVCoords;
+}
+
+Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
+{
+	Material thisMaterial;
+
+	byte u[4];
+	byte v[4];
+
+	reader.read((char*)&u[0], 1);
+	reader.read((char*)&v[0], 1);
+	reader.read((char*)&thisMaterial.clutValue, sizeof(thisMaterial.clutValue));
+	reader.read((char*)&u[1], 1);
+	reader.read((char*)&v[1], 1);
+	reader.read((char*)&thisMaterial.texturePage, sizeof(thisMaterial.texturePage));
+	reader.read((char*)&u[2], 1);
+	reader.read((char*)&v[2], 1);
+
+	float sideA = sqrt(pow(u[1] - u[2], 2) + pow(v[1] - v[2], 2));
+	float sideB = sqrt(pow(u[0] - u[2], 2) + pow(v[0] - v[2], 2));
+	float sideC = sqrt(pow(u[0] - u[1], 2) + pow(v[0] - v[1], 2));
+	
+	unsigned int hingeIndex = getMinOrMaxIndexOfThree(sideA, sideB, sideC, false);
 
 	int notHinge[2];
 
@@ -311,63 +344,23 @@ float* UVPointCorrection(byte v1U, byte v1V, byte v2U, byte v2V, byte v3U, byte 
 		}
 	}
 
-	int extremeValueU = abs(uAxis[hingeIndex] - uAxis[notHinge[1]]);
-	int extremeValueV = abs(uAxis[hingeIndex] - uAxis[notHinge[1]]);
-	int extremeValueUIndex = notHinge[1];
-	int extremeValueVIndex = notHinge[1];
+	u[3] = u[notHinge[0]] + u[notHinge[1]] - u[hingeIndex];
+	v[3] = v[notHinge[0]] + v[notHinge[1]] - v[hingeIndex];
 
-	if (abs(uAxis[hingeIndex] - uAxis[notHinge[0]]) >= abs(uAxis[hingeIndex] - uAxis[notHinge[1]]))
-	{
-		extremeValueU = abs(uAxis[hingeIndex] - uAxis[notHinge[0]]);
-		extremeValueUIndex = notHinge[0];
-	}
-	if (abs(vAxis[hingeIndex] - vAxis[notHinge[0]]) >= abs(vAxis[hingeIndex] - vAxis[notHinge[1]]))
-	{
-		extremeValueV = abs(vAxis[hingeIndex] - vAxis[notHinge[0]]);
-		extremeValueVIndex = notHinge[0];
-	}
+	thisMaterial.uvCoordinates[0].u = u[0];
+	thisMaterial.uvCoordinates[0].v = v[0];
+	thisMaterial.uvCoordinates[1].u = u[1];
+	thisMaterial.uvCoordinates[1].v = v[1];
+	thisMaterial.uvCoordinates[2].u = u[2];
+	thisMaterial.uvCoordinates[2].v = v[2];
+	thisMaterial.uvCoordinates[3].u = u[3];
+	thisMaterial.uvCoordinates[3].v = v[3];
 
-	extremeValueIndex = extremeValueVIndex;
-
-	if (extremeValueU >= extremeValueV)
-	{
-		extremeValueAxis = false;
-		extremeValueIndex = extremeValueUIndex;
-	}
-
-	if (extremeValueIndex == extremeValueUIndex)
-	{
-		multiplier = 255 / abs(uAxis[hingeIndex] - uAxis[extremeValueIndex]);
-	}
-	else
-	{
-		multiplier = 255 / abs(vAxis[hingeIndex] - vAxis[extremeValueIndex]);
-	}
-
-	for (int i = 0; i < 3; i++)
-	{
-		if (i != hingeIndex)
-		{
-			int diffV = vAxis[i] - vAxis[hingeIndex];
-			int diffU = uAxis[i] - uAxis[hingeIndex];
-			vAxis[i] = vAxis[hingeIndex] + diffV * multiplier;
-			uAxis[i] = uAxis[hingeIndex] + diffU * multiplier;
-		}
-	}
-
-	//Need to stretch it in the necessary axis if the original's aspect ratio is not 1:1, however as far as I know none of the textures are like this
-
-	float newUVCoords[6] = {uAxis[0], vAxis[0], uAxis[1], vAxis[1], uAxis[2], vAxis[2]};
-
-	return newUVCoords;
+	return thisMaterial;
 }
 
-Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
+float* readUVCoordinates(ifstreamoffset &reader)
 {
-	Material thisMaterial;
-
-	thisMaterial.materialPosition = reader.tellg();
-
 	byte v1U;
 	byte v1V;
 	byte v2U;
@@ -377,10 +370,10 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 
 	reader.read((char*)&v1U, 1);
 	reader.read((char*)&v1V, 1);
-	reader.read((char*)&thisMaterial.clutValue, sizeof(thisMaterial.clutValue));
+	reader.seekg(2, reader.cur);
 	reader.read((char*)&v2U, 1);
 	reader.read((char*)&v2V, 1);
-	reader.read((char*)&thisMaterial.texturePage, sizeof(thisMaterial.texturePage));
+	reader.seekg(2, reader.cur);
 	reader.read((char*)&v3U, 1);
 	reader.read((char*)&v3V, 1);
 
@@ -388,14 +381,7 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 
 	newUVCoords = UVPointCorrection(v1U, v1V, v2U, v2V, v3U, v3V);
 
-	thisMaterial.v1U = newUVCoords[0] / 255.0f;
-	thisMaterial.v1V = newUVCoords[1] / 255.0f;
-	thisMaterial.v2U = newUVCoords[2] / 255.0f;
-	thisMaterial.v2V = newUVCoords[3] / 255.0f;
-	thisMaterial.v3U = newUVCoords[4] / 255.0f;
-	thisMaterial.v3V = newUVCoords[5] / 255.0f;
-
-	return thisMaterial;
+	return newUVCoords;
 }
 
 PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
@@ -424,22 +410,83 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 		unsigned int materialPosition;
 		reader.read((char*)&materialPosition, sizeof(materialPosition));
 
-		bool newMaterial = true;
+		reader.seekg(materialPosition, reader.beg);
 
+		//This commented code is for the original method which would have required textures to all be completely separate, rather than the whole texture page getting exported
+		//However, this method broke too much when I implemented it, so for the meantime the texture page solution will be used.
+		//Will make a new release once I figure out how to export textures
+		// 
+		//float* UVCoords;
+		//UVCoords = readUVCoordinates(reader);
+		//thisPolygon.uv1.u = UVCoords[0] / 255.0f;
+		//thisPolygon.uv1.v = UVCoords[1] / 255.0f;
+		//thisPolygon.uv2.u = UVCoords[2] / 255.0f;
+		//thisPolygon.uv2.v = UVCoords[3] / 255.0f;
+		//thisPolygon.uv3.u = UVCoords[4] / 255.0f;
+		//thisPolygon.uv3.v = UVCoords[5] / 255.0f;
+
+		byte u[3];
+		byte v[3];
+		reader.read((char*)&u[0], 1);
+		reader.read((char*)&v[0], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[1], 1);
+		reader.read((char*)&v[1], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[2], 1);
+		reader.read((char*)&v[2], 1);
+
+		thisPolygon.uv1.u = u[0] / 255.0f;
+		thisPolygon.uv1.v = v[0] / 255.0f;
+		thisPolygon.uv2.u = u[1] / 255.0f;
+		thisPolygon.uv2.v = v[1] / 255.0f;
+		thisPolygon.uv3.u = u[2] / 255.0f;
+		thisPolygon.uv3.v = v[2] / 255.0f;
+
+		reader.seekg(materialPosition, reader.beg);
+		Material thisMaterial = readMaterial(reader, p, materials);
+
+		bool newMaterial = true;
 		for (int m = 0; m < materials.size(); m++)
 		{
-			if (materials[m].materialPosition == materialPosition)
+			bool newClutValue = true;
+			bool newTexturePage = true;
+			bool newUVCoordinates[4];
+			newUVCoordinates[0] = true;
+			newUVCoordinates[1] = true;
+			newUVCoordinates[2] = true;
+			newUVCoordinates[3] = true;
+			if (thisMaterial.clutValue == materials[m].clutValue)
+			{
+				newClutValue = false;
+			}
+			if (thisMaterial.texturePage == materials[m].texturePage)
+			{
+				newTexturePage = false;
+			}
+
+			for (int thisMaterialUV = 0; thisMaterialUV < 4; thisMaterialUV++)
+			{
+				for (int iteratorMaterialUV = 0; iteratorMaterialUV < 4; iteratorMaterialUV++)
+				{
+					if (thisMaterial.uvCoordinates[thisMaterialUV].u == materials[m].uvCoordinates[iteratorMaterialUV].u
+						&& thisMaterial.uvCoordinates[thisMaterialUV].v == materials[m].uvCoordinates[iteratorMaterialUV].v)
+					{
+						newUVCoordinates[thisMaterialUV] = false;
+					}
+				}
+			}
+
+			if (!newClutValue && !newTexturePage) //&& !newUVCoordinates[0] && !newUVCoordinates[1] && !newUVCoordinates[2] && !newUVCoordinates[3]
 			{
 				newMaterial = false;
 				thisPolygon.materialID = m;
 				break;
 			}
 		}
-
 		if (newMaterial)
-		{ 
-			reader.seekg(materialPosition, reader.beg);
-			materials.push_back(readMaterial(reader, p, materials));
+		{
+			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
 	}
@@ -640,12 +687,12 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 		std::string texturesString = " ";
 		for (int p = 0; p < meshPolygons.size(); p++)
 		{
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v1U, 0.5));
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v1V, 0.5));
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v2U, 0.5));
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v2V, 0.5));
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v3U, 0.5));
-			texturesString += std::format("{} ", oneOrZero(materials[meshPolygons[p].materialID].v3V, 0.5));
+			texturesString += std::format("{} ", meshPolygons[p].uv1.u);
+			texturesString += std::format("{} ", meshPolygons[p].uv1.v);
+			texturesString += std::format("{} ", meshPolygons[p].uv2.u);
+			texturesString += std::format("{} ", meshPolygons[p].uv2.v);
+			texturesString += std::format("{} ", meshPolygons[p].uv3.u);
+			texturesString += std::format("{} ", meshPolygons[p].uv3.v);
 		}
 		texturesFloat_array->SetText(texturesString.c_str());
 		tinyxml2::XMLElement* texturesTechnique_common = outputDAE.NewElement("technique_common");

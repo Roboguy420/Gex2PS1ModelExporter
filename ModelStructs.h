@@ -24,7 +24,7 @@ struct Bone
 
 struct UV
 {
-	short int u, v;
+	float u, v;
 };
 
 struct PolygonStruct
@@ -36,8 +36,8 @@ struct PolygonStruct
 
 struct Material
 {
-	unsigned int materialPosition;
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	float v1U, v1V, v2U, v2V, v3U, v3V;
+	UV uvCoordinates[4];
 };

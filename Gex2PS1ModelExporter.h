@@ -121,6 +121,22 @@ unsigned int oneOrZero(auto number, auto threshold)
 	return 0;
 }
 
+unsigned int getMostDifferentIndexOfThree(auto element1, auto element2, auto element3)
+{
+	if (abs(element1 - element2) >= abs(element2 - element3) && abs(element1 - element3) >= abs(element2 - element3))
+	{
+		return 0;
+	}
+	else if (abs(element2 - element1) >= abs(element1 - element3) && abs(element2 - element3) >= abs(element1 - element3))
+	{
+		return 1;
+	}
+	else
+	{
+		return 2;
+	}
+}
+
 unsigned int getMinOrMaxIndexOfThree(auto element1, auto element2, auto element3, bool min)
 {
 	if (!min)

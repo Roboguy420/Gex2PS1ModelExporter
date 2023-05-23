@@ -47,7 +47,7 @@ Navigate to the TinyXML2 repository and copy the files _tinyxml2.cpp_ and _tinyx
 
 Next, build the TinyXML2 lib file using CMake (there are plenty of tutorials online on how to use CMake if you are struggling). After you're done building, go to either the _Debug_ or _Release_ folder (depending on the one you built) and copy the file _tinyxml2.lib_.
 
-Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib).
+Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib). Rename it so either DEBUG or RELEASE is at the end of the filename, depending on whether you built debug or release (tinyxml2DEBUG.lib or tinyxml2RELEASE.lib).
 
 If you have followed these steps correctly, TinyXML2 should now be added as an external library.
 

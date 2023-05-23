@@ -24,6 +24,8 @@ endif()
 
 # TODO: Add tests and install targets if needed.
 
-target_link_libraries(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2.lib")
+target_link_libraries(Gex2PS1ModelExporter PUBLIC 
+	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2DEBUG.lib"
+	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2RELEASE.lib")
 
 target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/include")
