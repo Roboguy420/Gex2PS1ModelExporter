@@ -310,6 +310,7 @@ float* UVPointCorrection(byte v1U, byte v1V, byte v2U, byte v2V, byte v3U, byte 
 Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
+	thisMaterial.realMaterial = true;
 
 	byte u[4];
 	byte v[4];
@@ -486,6 +487,33 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
+	}
+	else
+	{
+		//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
+		bool newMaterial = true;
+		for (int m = 0; m < materials.size(); m++)
+		{
+			if (!materials[m].realMaterial)
+			{
+				newMaterial = false;
+				thisPolygon.materialID = m;
+				break;
+			}
+		}
+		if (newMaterial)
+		{
+			Material fakeMaterial;
+			fakeMaterial.realMaterial = false;
+			materials.push_back(fakeMaterial);
+			thisPolygon.materialID = materials.size() - 1;
+		}
+		thisPolygon.uv1.u = 0.0f;
+		thisPolygon.uv2.u = 0.0f;
+		thisPolygon.uv3.u = 0.0f;
+		thisPolygon.uv1.v = 255.0f;
+		thisPolygon.uv2.v = 255.0f;
+		thisPolygon.uv3.v = 255.0f;
 	}
 
 	return thisPolygon;

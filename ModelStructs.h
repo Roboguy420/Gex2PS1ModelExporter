@@ -36,6 +36,7 @@ struct PolygonStruct
 
 struct Material
 {
+	bool realMaterial;
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	UV uvCoordinates[4];
