@@ -15,12 +15,11 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
-		//return -1;
+		return -1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
 	}
-	//std::string inputFile = argv[1];
-	std::string inputFile = "map5.drm";
+	std::string inputFile = argv[1];
 	std::string outputFolder;
 
 	//Selected export -1 = everything
@@ -227,8 +226,6 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
 
 	reader.seekg(vertexStartAddress, reader.beg);
-
-	//static std::vector<Vertex> vertices; //Needs to be static as to avoid values being overwritten/corrupted, as this function only returns the pointer to this array...
 
 	for (unsigned int v = 0; v < vertexCount; v++)
 	{
@@ -581,8 +578,6 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	asset->LinkEndChild(unit);
 	asset->LinkEndChild(up_axis);
 	rootNode->LinkEndChild(asset);
-
-	//Are library_images and library_effects needed? Idk. Guess we'll have to wait and see
 
 	tinyxml2::XMLElement* library_materials = outputDAE.NewElement("library_materials");
 	tinyxml2::XMLElement* library_geometries = outputDAE.NewElement("library_geometries");
