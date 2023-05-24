@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
-		return -1;
+		return 1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
 	}
@@ -41,91 +41,117 @@ int main(int argc, char* argv[])
 		selectedModelExport = stringToInt(argv[3], -1);
 	}
 
-	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile);
-
-	std::filesystem::create_directory(outputFolder);
-
-	if (!std::filesystem::exists(outputFolder))
+	if (!std::filesystem::exists(inputFile))
 	{
-		//Failed to create output folder
-		return -1;
+		//Input file doesn't exist
+		return 2;
 	}
 
 	ifstreamoffset reader(inputFile, std::ifstream::binary);
+	reader.exceptions(ifstreamoffset::eofbit);
 
 	if (!reader)
 	{
-		return -1;
+		return 3;
 	}
 
-	unsigned int bitshift;
-	reader.read((char *)&bitshift, sizeof(bitshift));
-	bitshift = ((bitshift >> 9) << 11) + 0x800;
-	reader.superOffset = bitshift;
-	
-	unsigned int modelsAddressesStart;
-	reader.seekg(0x3C, reader.beg);
-	reader.read((char *)&modelsAddressesStart, sizeof(modelsAddressesStart));
-	reader.seekg(modelsAddressesStart, reader.beg);
-
-	unsigned int objIndex = 0;
-	while (selectedModelExport != 0)
+	if (!std::filesystem::exists(outputFolder))
 	{
-		unsigned int specificObjectAddress;
-		reader.read((char *)&specificObjectAddress, sizeof(specificObjectAddress));
+		//Failed to access output folder
+		return 4;
+	}
 
-		if (specificObjectAddress == modelsAddressesStart)
+	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile);
+
+	int returnCode = 0;
+	bool atLeastOneExportedSuccessfully = false;
+
+	try
+	{
+		unsigned int bitshift;
+		reader.read((char*)&bitshift, sizeof(bitshift));
+		bitshift = ((bitshift >> 9) << 11) + 0x800;
+		reader.superOffset = bitshift;
+
+		unsigned int modelsAddressesStart;
+		reader.seekg(0x3C, reader.beg);
+		reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
+		reader.seekg(modelsAddressesStart, reader.beg);
+
+		unsigned int objIndex = 0;
+		while (selectedModelExport != 0)
 		{
-			break;
-		}
+			unsigned int specificObjectAddress;
+			reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
 
-		objIndex += 1;
-
-		long int nextPos = reader.tellg();
-
-		if (objIndex == selectedModelExport || selectedModelExport == -1)
-		{
-			reader.seekg(specificObjectAddress + 0x24, reader.beg);
-			unsigned int objNameAddr;
-			reader.read((char*)&objNameAddr, sizeof(objNameAddr));
-			reader.seekg(objNameAddr, reader.beg);
-			std::string objName;
-			for (int i = 0; i < 8; i++)
+			if (specificObjectAddress == modelsAddressesStart)
 			{
-				char objNameChar;
-				reader.read((char*)&objNameChar, 1);
-				objName += objNameChar;
+				break;
 			}
 
-			unsigned short int objectCount;
-			unsigned int objectStartAddress;
-			reader.seekg(specificObjectAddress + 0x8, reader.beg);
-			reader.read((char*)&objectCount, sizeof(objectCount));
-			reader.seekg(2, reader.cur);
-			reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
+			objIndex += 1;
 
-			for (int i = 0; i < objectCount; i++)
+			long int nextPos = reader.tellg();
+
+			if (objIndex == selectedModelExport || selectedModelExport == -1)
 			{
-				reader.seekg(objectStartAddress + (i * 4), reader.beg);
-				unsigned int objectModelData;
-				reader.read((char*)&objectModelData, sizeof(objectModelData));
-
-				std::string objectNameAndIndex = objName;
-				if (objectCount > 1)
+				reader.seekg(specificObjectAddress + 0x24, reader.beg);
+				unsigned int objNameAddr;
+				reader.read((char*)&objNameAddr, sizeof(objNameAddr));
+				reader.seekg(objNameAddr, reader.beg);
+				std::string objName;
+				for (int i = 0; i < 8; i++)
 				{
-					objectNameAndIndex = objName + std::to_string(i + 1);
+					char objNameChar;
+					reader.read((char*)&objNameChar, 1);
+					objName += objNameChar;
 				}
 
-				reader.seekg(objectModelData, reader.beg);
-				convertObjToDAE(reader, outputFolder, objectNameAndIndex, i);
+				unsigned short int objectCount;
+				unsigned int objectStartAddress;
+				reader.seekg(specificObjectAddress + 0x8, reader.beg);
+				reader.read((char*)&objectCount, sizeof(objectCount));
+				reader.seekg(2, reader.cur);
+				reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
+
+				for (int i = 0; i < objectCount; i++)
+				{
+					reader.seekg(objectStartAddress + (i * 4), reader.beg);
+					unsigned int objectModelData;
+					reader.read((char*)&objectModelData, sizeof(objectModelData));
+
+					std::string objectNameAndIndex = objName;
+					if (objectCount > 1)
+					{
+						objectNameAndIndex = objName + std::to_string(i + 1);
+					}
+
+					reader.seekg(objectModelData, reader.beg);
+					int objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, i);
+					if (returnCode != 6 && objectReturnCode == 1)
+					{
+						returnCode = 6;
+					}
+					else
+					{
+						atLeastOneExportedSuccessfully = true;
+					}
+				}
+				if (objIndex == selectedModelExport) { break; }
 			}
-			if (objIndex == selectedModelExport) { break; }
+
+			reader.seekg(nextPos, reader.beg);
 		}
-
-		reader.seekg(nextPos, reader.beg);
 	}
-
-	return 0;
+	catch (ifstreamoffset::failure e)
+	{
+		return 5;
+	}
+	if (!atLeastOneExportedSuccessfully)
+	{
+		return 7;
+	}
+	return returnCode;
 }
 
 void readArmature(ifstreamoffset &reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones)
@@ -873,10 +899,11 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	std::string filenameString = outputFolder + directorySeparator() + objectName + ".dae";
 	strcpy(filename, filenameString.c_str());
 
+	std::filesystem::create_directory(outputFolder);
 	if (std::filesystem::exists(outputFolder))
 	{
 		outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str());
 		return 0;
 	}
-	return -1;
+	return 1;
 }

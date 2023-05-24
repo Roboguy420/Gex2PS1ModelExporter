@@ -28,6 +28,17 @@ First, open the Gex 2 .bin file using PowerISO. Extract the file called _BIGFILE
 
 Open Soul Spiral and click on the button "Open a BigFile". Navigate to where _BIGFILE.DAT_ is and select it. Use the automatic settings. Export the DRM files that you want.
 
+## Return Values
+The return values are as follows:
+* **0:** Successful export with no errors
+* **1:** Insufficient arguments
+* **2:** Input file not found
+* **3:** Failed to read input file
+* **4:** Output folder not found/failed to write to
+* **5:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
+* **6:** At least 1 successful export, others had failures
+* **7:** No successful exports, all attempts failed
+
 ## Compilation & Building
 This program requires:
 * [TinyXML2](https://github.com/leethomason/tinyxml2) to make the DAE files
