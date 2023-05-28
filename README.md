@@ -26,7 +26,7 @@ To get the model files you will need:
 
 First, open the Gex 2 .bin file using PowerISO. Extract the file called _BIGFILE.DAT_.
 
-Open Soul Spiral and click on the button "Open a BigFile". Navigate to where _BIGFILE.DAT_ is and select it. Use the automatic settings. Export the DRM files that you want.
+Open Soul Spiral and click on the button "Open a BigFile". Navigate to where _BIGFILE.DAT_ is and select it. Use the automatic settings. Export the DRM files that you want, alongside their respective VRM files.
 
 ## Return Values
 The return values are as follows:
