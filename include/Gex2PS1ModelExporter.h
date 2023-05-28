@@ -7,7 +7,10 @@
 #include <string>
 #include <format>
 
-int stringToInt(std::string inputString, int failValue)
+int initialiseVRM(std::string path);
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, std::string objectName, std::string outputFolder, unsigned int textureIndex);
+
+static int stringToInt(std::string inputString, int failValue)
 {
 	for (int i = 0; i < inputString.length(); i++)
 	{
@@ -28,12 +31,13 @@ inline char directorySeparator()
 #endif
 }
 
-std::string getFileNameWithoutExtension(std::string fileName)
+static std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
 {
-	//Does not return the path, even if there is one in the argument
 	size_t parentDirEnd = fileName.find_last_of(directorySeparator());
+	std::string filePath;
 	if (parentDirEnd != std::string::npos)
 	{
+		filePath = fileName.substr(0, parentDirEnd + 1);
 		fileName = fileName.substr(parentDirEnd + 1);
 	}
 	size_t extensionStart = fileName.find_last_of('.');
@@ -41,10 +45,14 @@ std::string getFileNameWithoutExtension(std::string fileName)
 	{
 		return fileName; //Simply returns the filename if there is no extension
 	}
+	if (includePath)
+	{
+		return filePath + fileName.substr(0, extensionStart);
+	}
 	return fileName.substr(0, extensionStart);
 }
 
-std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
+static std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
 {
 	//Workaround for those pesky floating point rounding errors whenever you divide a number by power of 10
 	
@@ -63,7 +71,7 @@ std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
 	bool negative = false;
 	if (inputNumberString[0] == '-')
 	{
-		inputNumberString = inputNumberString.erase(0, 1);
+		inputNumberString.erase(0, 1);
 		negative = true;
 	}
 	
@@ -78,8 +86,10 @@ std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
 	}
 	else
 	{
-		leftOfDecimal = inputNumberString.erase(inputNumberString.length() - powerOfTen, powerOfTen);
-		rightOfDecimal = inputNumberString.erase(0, inputNumberString.length() - powerOfTen);
+		std::string inputNumberStringLeft = inputNumberString;
+		std::string inputNumberStringRight = inputNumberString;
+		leftOfDecimal = inputNumberStringLeft.erase(inputNumberString.length() - powerOfTen, powerOfTen);
+		rightOfDecimal = inputNumberStringRight.erase(0, inputNumberString.length() - powerOfTen);
 	}
 	
 	if (negative)

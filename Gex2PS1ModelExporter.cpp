@@ -2,14 +2,14 @@
 
 #include <tinyxml2/tinyxml2.h>
 
-#include "Gex2PS1ModelExporter.h"
+#include <Gex2PS1ModelExporter.h>
 #include "ModelStructs.h"
 #include <Windows.h>
 #include <filesystem>
 #include <algorithm>
 #include <vector>
 
-int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, unsigned int sameNameIndex);
+int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile);
 
 int main(int argc, char* argv[])
 {
@@ -61,13 +61,14 @@ int main(int argc, char* argv[])
 		return 4;
 	}
 
-	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile);
+	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile, false);
 
 	int returnCode = 0;
 	bool atLeastOneExportedSuccessfully = false;
 
 	try
 	{
+		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(inputFile, true)));
 		unsigned int bitshift;
 		reader.read((char*)&bitshift, sizeof(bitshift));
 		bitshift = ((bitshift >> 9) << 11) + 0x800;
@@ -127,10 +128,17 @@ int main(int argc, char* argv[])
 					}
 
 					reader.seekg(objectModelData, reader.beg);
-					int objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, i);
+					int objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, inputFile);
 					if (returnCode != 6 && objectReturnCode == 1)
 					{
+						//At least 1 texture failed to export
 						returnCode = 6;
+					}
+
+					if (returnCode != 7 && objectReturnCode == 2)
+					{
+						//Model failed to export
+						returnCode = 7;
 					}
 					else
 					{
@@ -149,7 +157,7 @@ int main(int argc, char* argv[])
 	}
 	if (!atLeastOneExportedSuccessfully)
 	{
-		return 7;
+		return 8;
 	}
 	return returnCode;
 }
@@ -269,6 +277,12 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 
 float* UVPointCorrection(byte v1U, byte v1V, byte v2U, byte v2V, byte v3U, byte v3V)
 {
+	//!!!!!!!!!!!!!!!!!!!!!!
+	//!	 				   !
+	//!  Currently unused  !
+	//!                    !
+	//!!!!!!!!!!!!!!!!!!!!!!
+
 	float uAxis[3];
 	float vAxis[3];
 	uAxis[0] = v1U;
@@ -337,6 +351,7 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 {
 	Material thisMaterial;
 	thisMaterial.realMaterial = true;
+	thisMaterial.properlyExported = true;
 
 	byte u[4];
 	byte v[4];
@@ -372,19 +387,25 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 	v[3] = v[notHinge[0]] + v[notHinge[1]] - v[hingeIndex];
 
 	thisMaterial.uvCoordinates[0].u = u[0];
-	thisMaterial.uvCoordinates[0].v = v[0];
+	thisMaterial.uvCoordinates[0].v = 255 - v[0];
 	thisMaterial.uvCoordinates[1].u = u[1];
-	thisMaterial.uvCoordinates[1].v = v[1];
+	thisMaterial.uvCoordinates[1].v = 255 - v[1];
 	thisMaterial.uvCoordinates[2].u = u[2];
-	thisMaterial.uvCoordinates[2].v = v[2];
+	thisMaterial.uvCoordinates[2].v = 255 - v[2];
 	thisMaterial.uvCoordinates[3].u = u[3];
-	thisMaterial.uvCoordinates[3].v = v[3];
+	thisMaterial.uvCoordinates[3].v = 255 - v[3];
 
 	return thisMaterial;
 }
 
 float* readUVCoordinates(ifstreamoffset &reader)
 {
+	//!!!!!!!!!!!!!!!!!!!!!!
+	//!	 				   !
+	//!  Currently unused  !
+	//!                    !
+	//!!!!!!!!!!!!!!!!!!!!!!
+
 	byte v1U;
 	byte v1V;
 	byte v2U;
@@ -408,7 +429,7 @@ float* readUVCoordinates(ifstreamoffset &reader)
 	return newUVCoords;
 }
 
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	PolygonStruct thisPolygon;
 
@@ -436,19 +457,6 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 
 		reader.seekg(materialPosition, reader.beg);
 
-		//This commented code is for the original method which would have required textures to all be completely separate, rather than the whole texture page getting exported
-		//However, this method broke too much when I implemented it, so for the meantime the texture page solution will be used.
-		//Will make a new release once I figure out how to export textures
-		// 
-		//float* UVCoords;
-		//UVCoords = readUVCoordinates(reader);
-		//thisPolygon.uv1.u = UVCoords[0] / 255.0f;
-		//thisPolygon.uv1.v = UVCoords[1] / 255.0f;
-		//thisPolygon.uv2.u = UVCoords[2] / 255.0f;
-		//thisPolygon.uv2.v = UVCoords[3] / 255.0f;
-		//thisPolygon.uv3.u = UVCoords[4] / 255.0f;
-		//thisPolygon.uv3.v = UVCoords[5] / 255.0f;
-
 		byte u[3];
 		byte v[3];
 		reader.read((char*)&u[0], 1);
@@ -461,11 +469,11 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 		reader.read((char*)&v[2], 1);
 
 		thisPolygon.uv1.u = u[0] / 255.0f;
-		thisPolygon.uv1.v = v[0] / 255.0f;
+		thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
 		thisPolygon.uv2.u = u[1] / 255.0f;
-		thisPolygon.uv2.v = v[1] / 255.0f;
+		thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
 		thisPolygon.uv3.u = u[2] / 255.0f;
-		thisPolygon.uv3.v = v[2] / 255.0f;
+		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
 
 		reader.seekg(materialPosition, reader.beg);
 		Material thisMaterial = readMaterial(reader, p, materials);
@@ -510,6 +518,20 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 		}
 		if (newMaterial)
 		{
+			unsigned int textureCount = 0;
+			for (int i = 0; i < materials.size(); i++)
+			{
+				if (materials[i].realMaterial)
+				{
+					textureCount++;
+				}
+			}
+			thisMaterial.textureID = textureCount;
+			int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, objectName, outputFolder, (thisMaterial.textureID + 1));
+			if (texPageReturnValue != 0)
+			{
+				thisMaterial.properlyExported = false;
+			}
 			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
@@ -531,6 +553,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 		{
 			Material fakeMaterial;
 			fakeMaterial.realMaterial = false;
+			fakeMaterial.properlyExported = true;
 			materials.push_back(fakeMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
@@ -545,7 +568,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 	return thisPolygon;
 }
 
-void readPolygons(ifstreamoffset& reader, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int materialStartAddress, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
 
@@ -554,13 +577,15 @@ void readPolygons(ifstreamoffset& reader, unsigned short int polygonCount, unsig
 	for (unsigned short int p = 0; p < polygonCount; p++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		polygons.push_back(readPolygon(reader, p, materials, vertices));
+		polygons.push_back(readPolygon(reader, objectName, outputFolder, p, materials, vertices));
 		reader.seekg(uPolygonPosition + 0xC, reader.beg);
 	}
 }
 
-int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::string objectName, unsigned int sameNameIndex)
+int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::string objectName, std::string inputFile)
 {
+	int returnValue = 0;
+
 	unsigned short int vertexCount;
 	unsigned int vertexStartAddress;
 	unsigned short int polygonCount;
@@ -588,7 +613,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
 
-	readPolygons(reader, polygonCount, polygonStartAddress, materialStartAddress, polygons, materials, vertices);
+	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, polygons, materials, vertices);
 
 	unsigned int oldPosition = reader.tellg();
 
@@ -633,6 +658,8 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	asset->LinkEndChild(up_axis);
 	rootNode->LinkEndChild(asset);
 
+	tinyxml2::XMLElement* library_images = outputDAE.NewElement("library_images");
+	tinyxml2::XMLElement* library_effects = outputDAE.NewElement("library_effects");
 	tinyxml2::XMLElement* library_materials = outputDAE.NewElement("library_materials");
 	tinyxml2::XMLElement* library_geometries = outputDAE.NewElement("library_geometries");
 
@@ -658,11 +685,90 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 	for (int m = 0; m < materials.size(); m++)
 	{
+		if (!materials[m].properlyExported)
+		{
+			returnValue = 1;
+		}
+
+		//Textures
+
+		if (materials[m].realMaterial && materials[m].properlyExported)
+		{
+			tinyxml2::XMLElement* image = outputDAE.NewElement("image");
+			image->SetAttribute("id", std::format("{}-{}-diffuse-image", objectName, materials[m].textureID).c_str());
+			tinyxml2::XMLElement* init_fromDiffuseImage = outputDAE.NewElement("init_from");
+			init_fromDiffuseImage->SetText(std::format("{}-tex{}.png", objectName, materials[m].textureID+1).c_str());
+			image->LinkEndChild(init_fromDiffuseImage);
+			library_images->LinkEndChild(image);
+		}
+
+		//Effects
+
+		if (materials[m].realMaterial && materials[m].properlyExported)
+		{
+			tinyxml2::XMLElement* effect = outputDAE.NewElement("effect");
+			effect->SetAttribute("id", std::format("{}-{}-fx", objectName, materials[m].textureID).c_str());
+			effect->SetAttribute("name", std::format("{}-{}", objectName, materials[m].textureID).c_str());
+			tinyxml2::XMLElement* profile_COMMON = outputDAE.NewElement("profile_COMMON");
+
+			tinyxml2::XMLElement* newparamSurface = outputDAE.NewElement("newparam");
+			newparamSurface->SetAttribute("sid", std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
+			tinyxml2::XMLElement* surface = outputDAE.NewElement("surface");
+			surface->SetAttribute("type", "2D");
+			tinyxml2::XMLElement* init_fromDiffuseSurface = outputDAE.NewElement("init_from");
+			init_fromDiffuseSurface->SetText(std::format("{}-{}-diffuse-image", objectName, materials[m].textureID).c_str());
+			surface->LinkEndChild(init_fromDiffuseSurface);
+			newparamSurface->LinkEndChild(surface);
+			profile_COMMON->LinkEndChild(newparamSurface);
+
+			tinyxml2::XMLElement* newparamSampler = outputDAE.NewElement("newparam");
+			newparamSampler->SetAttribute("sid", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
+			tinyxml2::XMLElement* sampler2D = outputDAE.NewElement("sampler2D");
+			tinyxml2::XMLElement* samplerSource = outputDAE.NewElement("source");
+			samplerSource->SetText(std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
+			sampler2D->LinkEndChild(samplerSource);
+			newparamSampler->LinkEndChild(sampler2D);
+			profile_COMMON->LinkEndChild(newparamSampler);
+
+			tinyxml2::XMLElement* technique = outputDAE.NewElement("technique");
+			technique->SetAttribute("sid", "standard");
+			tinyxml2::XMLElement* phong = outputDAE.NewElement("phong");
+			tinyxml2::XMLElement* diffuse = outputDAE.NewElement("diffuse");
+			tinyxml2::XMLElement* texture = outputDAE.NewElement("texture");
+			texture->SetAttribute("texture", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
+			texture->SetAttribute("texcoord", "CHANNEL0");
+			diffuse->LinkEndChild(texture);
+			phong->LinkEndChild(diffuse);
+			tinyxml2::XMLElement* specular = outputDAE.NewElement("specular");
+			tinyxml2::XMLElement* specularColour = outputDAE.NewElement("color");
+			specularColour->SetAttribute("sid", "specular");
+			specularColour->SetText("0   0   0   0");
+			specular->LinkEndChild(specularColour);
+			phong->LinkEndChild(specular);
+			tinyxml2::XMLElement* transparency = outputDAE.NewElement("transparency");
+			tinyxml2::XMLElement* transparencyFloat = outputDAE.NewElement("float");
+			transparencyFloat->SetAttribute("sid", "transparency");
+			transparencyFloat->SetText("1");
+			transparency->LinkEndChild(transparencyFloat);
+			phong->LinkEndChild(transparency);
+			technique->LinkEndChild(phong);
+			profile_COMMON->LinkEndChild(technique);
+
+			effect->LinkEndChild(profile_COMMON);
+			library_effects->LinkEndChild(effect);
+		}
+
 		//Materials
 
 		tinyxml2::XMLElement* material = outputDAE.NewElement("material");
 		material->SetAttribute("id", std::format("{}-mat{}", objectName, m).c_str());
 		material->SetAttribute("name", std::format("{}-mat{}", objectName, m).c_str());
+		if (materials[m].realMaterial && materials[m].properlyExported)
+		{
+			tinyxml2::XMLElement* instance_effectMaterial = outputDAE.NewElement("instance_effect");
+			instance_effectMaterial->SetAttribute("url", std::format("#{}-{}-fx", objectName, materials[m].textureID).c_str());
+			material->LinkEndChild(instance_effectMaterial);
+		}
 		library_materials->LinkEndChild(material);
 
 		//Geometry Setup
@@ -877,6 +983,8 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 		nodeModel->LinkEndChild(instance_geometry);
 	}
 
+	rootNode->LinkEndChild(library_images);
+	rootNode->LinkEndChild(library_effects);
 	rootNode->LinkEndChild(library_materials);
 	rootNode->LinkEndChild(library_geometries);
 
@@ -895,15 +1003,13 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 	outputDAE.LinkEndChild(rootNode);
 
-	char filename[1024];
-	std::string filenameString = outputFolder + directorySeparator() + objectName + ".dae";
-	strcpy(filename, filenameString.c_str());
-
 	std::filesystem::create_directory(outputFolder);
 	if (std::filesystem::exists(outputFolder))
 	{
 		outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str());
-		return 0;
+		return returnValue;
 	}
-	return 1;
+
+	//Could not export
+	return 2;
 }

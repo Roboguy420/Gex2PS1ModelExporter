@@ -36,12 +36,15 @@ The return values are as follows:
 * **3:** Failed to read input file
 * **4:** Output folder not found/failed to write to
 * **5:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
-* **6:** At least 1 successful export, others had failures
-* **7:** No successful exports, all attempts failed
+* **6:** At least 1 texture failed to export - You are likely to get this a lot because one of etvbutn_2's textures does not export properly. This object is in virtually all the game's model files
+* **7:** At least 1 successful export, others had failures
+* **8:** No successful exports, all attempts failed
 
 ## Compilation & Building
 This program requires:
 * [TinyXML2](https://github.com/leethomason/tinyxml2) to make the DAE files
+* [libpng](https://sourceforge.net/projects/libpng/files/) to export textures to PNG
+* [zlib](https://sourceforge.net/projects/libpng/files/zlib/) to compile libpng
 * [CMake](https://cmake.org) to build
 * [Clang](https://clang.llvm.org) to compile
 
@@ -61,6 +64,31 @@ Next, build the TinyXML2 lib file using CMake (there are plenty of tutorials onl
 Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib). Rename it so either DEBUG or RELEASE is at the end of the filename, depending on whether you built debug or release (tinyxml2DEBUG.lib or tinyxml2RELEASE.lib).
 
 If you have followed these steps correctly, TinyXML2 should now be added as an external library.
+
+### libpng
+This one's a bit of a ballache and for me the visual studio solutions provided in the source code were riddled with errors, so I instead rebuilt the solutions using CMakeLists, which I'll briefly go over how to do here.
+
+Download libpng16 1.6.39 and unzip the folder to any location on your PC. Download zlib 1.2.11 and unzip the folder to any location on your PC.
+
+Build zlib using CMake. Navigate to the build directory and open the solution file. Keep the build setting on debug for now. Right click zlibstatic and then click "Build" to build the file. Change the build setting to release and build the files again.
+
+Next, copy both the compiled debug and release files. Create a new folder in the root of the libpng16 source code. You can name it whatever you want, I just called it zlib. Paste the files into the new folder.
+
+Go back to the source code of zlib and copy the header files zconf.h and zlib.h. Paste them into the new folder in the libpng16 source code.
+
+Now you can build libpng using CMake, setting the ZLIB_INCLUDE_DIR variable to the folder you created, setting ZLIB_LIBRARY_DEBUG to zlibstaticd.lib, and setting ZLIB_LIBRARY_RELEASE to zlibstatic.lib.
+
+Copy zlibstatic.lib and zlibstaticd.lib. Navigate to the build directory and paste the files there. Open the libpng solution file.
+
+Choose either release or debug depending on which one you want to build for. Right click png and click build.
+
+Create a new folder called libpng in the libraries folder in the model exporter's source code. Create two more folders in here called include and lib. Create a new folder inside include called libpng.
+
+Copy libpng16.dll, libpng16.lib, libpng16d.lib, zlibstatic.lib, and zlibstaticd.lib and paste them into the lib folder.
+
+Copy and paste zconf.h and zlib.h into include/libpng. Also copy and paste png.h, pngconf.h, and pnglibconf.h into there (these files can be found in the root of the libpng source code).
+
+If you have followed these steps correctly, libpng should now be added as an external library.
 
 ### Compile using Clang
 If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ as the project. Click build and the program should be created.

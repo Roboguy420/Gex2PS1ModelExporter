@@ -16,7 +16,7 @@ endif()
 project ("Gex2PS1ModelExporter")
 
 # Add source to this project's executable.
-add_executable (Gex2PS1ModelExporter "Gex2PS1ModelExporter.cpp" "Gex2PS1ModelExporter.h" "ModelStructs.h")
+add_executable (Gex2PS1ModelExporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Gex2PS1ModelExporter PROPERTY CXX_STANDARD 20)
@@ -24,8 +24,16 @@ endif()
 
 # TODO: Add tests and install targets if needed.
 
+target_include_directories(Gex2PS1ModelExporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 target_link_libraries(Gex2PS1ModelExporter PUBLIC 
-	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2DEBUG.lib"
-	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2RELEASE.lib")
+	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2d.lib"
+	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2.lib")
 
 target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/include")
+
+target_link_libraries(Gex2PS1ModelExporter PUBLIC
+	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16d.lib"
+	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16.lib")
+
+target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/include")

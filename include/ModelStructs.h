@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Gex2PS1ModelExporter.h"
-
 //"Intermediary" model structures
 
 struct Vertex
@@ -37,7 +35,9 @@ struct PolygonStruct
 struct Material
 {
 	bool realMaterial;
+	bool properlyExported;
 	unsigned short int clutValue;
 	unsigned short int texturePage;
+	unsigned int textureID;
 	UV uvCoordinates[4];
 };
