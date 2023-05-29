@@ -5,9 +5,9 @@ This is a simple command line program written in C++ that exports Gex 2 PS1 mode
 Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1ModelExporter/releases). Download the latest release for your OS to get all the latest features.
 
 ## Usage
-There are 3 parameters in the program, 1 is needed needed and the other 2 are optional.
+There are 3 parameters in the program, 1 is needed and the other 2 are optional.
 
-The 1st parameter is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the program's location, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\)
+The 1st parameter is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
 
 The 2nd parameter is the **output folder**. This is the folder where the models will be output. Note that this does not create a folder with the name of the parameter; the folder must be preexisting in order to work. If there is no 2nd parameter, it uses the current working directory.
 
@@ -70,23 +70,23 @@ This one's a bit of a ballache and for me the visual studio solutions provided i
 
 Download libpng16 1.6.39 and unzip the folder to any location on your PC. Download zlib 1.2.11 and unzip the folder to any location on your PC.
 
-Build zlib using CMake. Navigate to the build directory and open the solution file. Keep the build setting on debug for now. Right click zlibstatic and then click "Build" to build the file. Change the build setting to release and build the files again.
+Build zlib using CMake. Navigate to the build directory and open the solution file. Keep the build setting on _Debug_ for now. Right click _zlibstatic_ and then click _Build_ to build the file. Change the build setting to _Release_ and build the files again.
 
 Next, copy both the compiled debug and release files. Create a new folder in the root of the libpng16 source code. You can name it whatever you want, I just called it zlib. Paste the files into the new folder.
 
-Go back to the source code of zlib and copy the header files zconf.h and zlib.h. Paste them into the new folder in the libpng16 source code.
+Go back to the source code of zlib and copy the header files _zconf.h_ and _zlib.h_. Paste them into the new folder in the libpng16 source code.
 
-Now you can build libpng using CMake, setting the ZLIB_INCLUDE_DIR variable to the folder you created, setting ZLIB_LIBRARY_DEBUG to zlibstaticd.lib, and setting ZLIB_LIBRARY_RELEASE to zlibstatic.lib.
+Now you can build libpng using CMake, setting the _ZLIB_INCLUDE_DIR_ variable to the folder you created, setting _ZLIB_LIBRARY_DEBUG_ to _zlibstaticd.lib_, and setting _ZLIB_LIBRARY_RELEASE_ to _zlibstatic.lib_.
 
-Copy zlibstatic.lib and zlibstaticd.lib. Navigate to the build directory and paste the files there. Open the libpng solution file.
+Copy _zlibstatic.lib_ and _zlibstaticd.lib_. Navigate to the build directory and paste the files there. Open the libpng solution file.
 
-Choose either release or debug depending on which one you want to build for. Right click png and click build.
+Choose either release or debug depending on which one you want to build for. Right click _png_ and click _Build_.
 
-Create a new folder called libpng in the libraries folder in the model exporter's source code. Create two more folders in here called include and lib. Create a new folder inside include called libpng.
+Create a new folder called _libpng_ in the _libraries_ folder in the model exporter's source code. Create two more folders inside the new folder called _include_ and _lib_. Create another new folder inside _include_ called _libpng_.
 
-Copy libpng16.dll, libpng16.lib, libpng16d.lib, zlibstatic.lib, and zlibstaticd.lib and paste them into the lib folder.
+Copy _libpng16.dll_, _libpng16.lib_, _libpng16d.lib_, _zlibstatic.lib_, and _zlibstaticd.lib_ and paste them into the _lib_ folder.
 
-Copy and paste zconf.h and zlib.h into include/libpng. Also copy and paste png.h, pngconf.h, and pnglibconf.h into there (these files can be found in the root of the libpng source code).
+Copy and paste _zconf.h_ and _zlib.h_ into _include/libpng_. Also copy and paste _png.h_, _pngconf.h_, and _pnglibconf.h_ into there (these files can be found in the root of the libpng source code).
 
 If you have followed these steps correctly, libpng should now be added as an external library.
 
