@@ -15,11 +15,11 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
-		//return 1;
+		return 1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
 	}
-	std::string inputFile = "map5.drm"; //argv[1];
+	std::string inputFile = argv[1];
 	std::string outputFolder;
 
 	//Selected export -1 = everything
@@ -275,78 +275,6 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 	applyArmature(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
 }
 
-float* UVPointCorrection(byte v1U, byte v1V, byte v2U, byte v2V, byte v3U, byte v3V)
-{
-	//!!!!!!!!!!!!!!!!!!!!!!
-	//!	 				   !
-	//!  Currently unused  !
-	//!                    !
-	//!!!!!!!!!!!!!!!!!!!!!!
-
-	float uAxis[3];
-	float vAxis[3];
-	uAxis[0] = v1U;
-	vAxis[0] = v1V;
-	uAxis[1] = v2U;
-	vAxis[1] = v2V;
-	uAxis[2] = v3U;
-	vAxis[2] = v3V;
-
-	unsigned int highestPointIndex = getMinOrMaxIndexOfThree(vAxis[0], vAxis[1], vAxis[2], false);
-	unsigned int lowestPointIndex = getMinOrMaxIndexOfThree(vAxis[0], vAxis[1], vAxis[2], true);
-	unsigned int farRightPointIndex = getMinOrMaxIndexOfThree(uAxis[0], uAxis[1], uAxis[2], false);
-	unsigned int farLeftPointIndex = getMinOrMaxIndexOfThree(uAxis[0], uAxis[1], uAxis[2], true);
-
-	unsigned int hingeIndex;
-
-	if (highestPointIndex == farRightPointIndex || highestPointIndex == farLeftPointIndex)
-	{
-		hingeIndex = highestPointIndex;
-	}
-	else
-	{
-		hingeIndex = lowestPointIndex;
-	}
-
-	uAxis[farRightPointIndex] = 255.0f;
-	uAxis[farLeftPointIndex] = 0.0f;
-	vAxis[highestPointIndex] = 255.0f;
-	vAxis[lowestPointIndex] = 0.0f;
-
-	if (hingeIndex == highestPointIndex && hingeIndex == farLeftPointIndex)
-	{
-		uAxis[hingeIndex] = 0.0f;
-		vAxis[hingeIndex] = 255.0f;
-		vAxis[farRightPointIndex] = 255.0f;
-		uAxis[lowestPointIndex] = 0.0f;
-	}
-	else if (hingeIndex == highestPointIndex && hingeIndex == farRightPointIndex)
-	{
-		uAxis[hingeIndex] = 255.0f;
-		vAxis[hingeIndex] = 255.0f;
-		vAxis[farLeftPointIndex] = 255.0f;
-		uAxis[lowestPointIndex] = 255.0f;
-	}
-	else if (hingeIndex == lowestPointIndex && hingeIndex == farLeftPointIndex)
-	{
-		uAxis[hingeIndex] = 0.0f;
-		vAxis[hingeIndex] = 0.0f;
-		vAxis[farRightPointIndex] = 0.0f;
-		uAxis[highestPointIndex] = 0.0f;
-	}
-	else
-	{
-		uAxis[hingeIndex] = 255.0f;
-		vAxis[hingeIndex] = 0.0f;
-		vAxis[farLeftPointIndex] = 0.0f;
-		uAxis[highestPointIndex] = 255.0f;
-	}
-
-	float newUVCoords[6] = {uAxis[0], vAxis[0], uAxis[1], vAxis[1], uAxis[2], vAxis[2]};
-
-	return newUVCoords;
-}
-
 Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
@@ -356,80 +284,16 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 	byte u[4];
 	byte v[4];
 
-	reader.read((char*)&u[0], 1);
-	reader.read((char*)&v[0], 1);
+	reader.seekg(2, reader.cur);
 	reader.read((char*)&thisMaterial.clutValue, sizeof(thisMaterial.clutValue));
-	reader.read((char*)&u[1], 1);
-	reader.read((char*)&v[1], 1);
+	reader.seekg(2, reader.cur);
 	reader.read((char*)&thisMaterial.texturePage, sizeof(thisMaterial.texturePage));
-	reader.read((char*)&u[2], 1);
-	reader.read((char*)&v[2], 1);
-
-	float sideA = sqrt(pow(u[1] - u[2], 2) + pow(v[1] - v[2], 2));
-	float sideB = sqrt(pow(u[0] - u[2], 2) + pow(v[0] - v[2], 2));
-	float sideC = sqrt(pow(u[0] - u[1], 2) + pow(v[0] - v[1], 2));
-	
-	unsigned int hingeIndex = getMinOrMaxIndexOfThree(sideA, sideB, sideC, false);
-
-	int notHinge[2];
-
-	int notHingeIterator = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		if (i != hingeIndex)
-		{
-			notHinge[notHingeIterator] = i;
-			notHingeIterator++;
-		}
-	}
-
-	u[3] = u[notHinge[0]] + u[notHinge[1]] - u[hingeIndex];
-	v[3] = v[notHinge[0]] + v[notHinge[1]] - v[hingeIndex];
-
-	thisMaterial.uvCoordinates[0].u = u[0];
-	thisMaterial.uvCoordinates[0].v = 255 - v[0];
-	thisMaterial.uvCoordinates[1].u = u[1];
-	thisMaterial.uvCoordinates[1].v = 255 - v[1];
-	thisMaterial.uvCoordinates[2].u = u[2];
-	thisMaterial.uvCoordinates[2].v = 255 - v[2];
-	thisMaterial.uvCoordinates[3].u = u[3];
-	thisMaterial.uvCoordinates[3].v = 255 - v[3];
+	reader.seekg(2, reader.cur);
 
 	return thisMaterial;
 }
 
-float* readUVCoordinates(ifstreamoffset &reader)
-{
-	//!!!!!!!!!!!!!!!!!!!!!!
-	//!	 				   !
-	//!  Currently unused  !
-	//!                    !
-	//!!!!!!!!!!!!!!!!!!!!!!
-
-	byte v1U;
-	byte v1V;
-	byte v2U;
-	byte v2V;
-	byte v3U;
-	byte v3V;
-
-	reader.read((char*)&v1U, 1);
-	reader.read((char*)&v1V, 1);
-	reader.seekg(2, reader.cur);
-	reader.read((char*)&v2U, 1);
-	reader.read((char*)&v2V, 1);
-	reader.seekg(2, reader.cur);
-	reader.read((char*)&v3U, 1);
-	reader.read((char*)&v3V, 1);
-
-	float* newUVCoords;
-
-	newUVCoords = UVPointCorrection(v1U, v1V, v2U, v2V, v3U, v3V);
-
-	return newUVCoords;
-}
-
-PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	PolygonStruct thisPolygon;
 
@@ -483,11 +347,6 @@ PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::s
 		{
 			bool newClutValue = true;
 			bool newTexturePage = true;
-			bool newUVCoordinates[4];
-			newUVCoordinates[0] = true;
-			newUVCoordinates[1] = true;
-			newUVCoordinates[2] = true;
-			newUVCoordinates[3] = true;
 			if (thisMaterial.clutValue == materials[m].clutValue)
 			{
 				newClutValue = false;
@@ -497,19 +356,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::s
 				newTexturePage = false;
 			}
 
-			for (int thisMaterialUV = 0; thisMaterialUV < 4; thisMaterialUV++)
-			{
-				for (int iteratorMaterialUV = 0; iteratorMaterialUV < 4; iteratorMaterialUV++)
-				{
-					if (thisMaterial.uvCoordinates[thisMaterialUV].u == materials[m].uvCoordinates[iteratorMaterialUV].u
-						&& thisMaterial.uvCoordinates[thisMaterialUV].v == materials[m].uvCoordinates[iteratorMaterialUV].v)
-					{
-						newUVCoordinates[thisMaterialUV] = false;
-					}
-				}
-			}
-
-			if (!newClutValue && !newTexturePage) //&& !newUVCoordinates[0] && !newUVCoordinates[1] && !newUVCoordinates[2] && !newUVCoordinates[3]
+			if (!newClutValue && !newTexturePage)
 			{
 				newMaterial = false;
 				thisPolygon.materialID = m;
@@ -527,11 +374,6 @@ PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::s
 				}
 			}
 			thisMaterial.textureID = textureCount;
-			int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, objectName, outputFolder, (thisMaterial.textureID + 1));
-			if (texPageReturnValue != 0)
-			{
-				thisMaterial.properlyExported = false;
-			}
 			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
@@ -568,6 +410,68 @@ PolygonStruct readPolygon(ifstreamoffset& reader, std::string objectName, std::s
 	return thisPolygon;
 }
 
+bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons)
+{
+	std::vector<UV> materialUVs;
+	std::vector<unsigned int> polygonIDs;
+
+	for (unsigned int p = 0; p < polygons.size(); p++)
+	{
+		if (polygons[p].materialID == materialID)
+		{
+			polygonIDs.push_back(p);
+			materialUVs.push_back(polygons[p].uv1);
+			materialUVs.push_back(polygons[p].uv2);
+			materialUVs.push_back(polygons[p].uv3);
+		}
+	}
+
+	std::sort(materialUVs.begin(), materialUVs.end(), sortUCoord);
+	float leftCoord = materialUVs[0].u;
+	float rightCoord = materialUVs[materialUVs.size() - 1].u;
+	std::sort(materialUVs.begin(), materialUVs.end(), sortVCoord);
+	float southCoord = materialUVs[0].v;
+	float northCoord = materialUVs[materialUVs.size() - 1].v;
+
+	//Translate to bottom left
+	for (const unsigned int& polygonID : polygonIDs)
+	{
+		polygons[polygonID].uv1.u -= leftCoord;
+		polygons[polygonID].uv2.u -= leftCoord;
+		polygons[polygonID].uv3.u -= leftCoord;
+		polygons[polygonID].uv1.v -= southCoord;
+		polygons[polygonID].uv2.v -= southCoord;
+		polygons[polygonID].uv3.v -= southCoord;
+	}
+
+	//Stretch up to top right
+	float stretchInU = 1.0f / (rightCoord - leftCoord);
+	float stretchInV = 1.0f / (northCoord - southCoord);
+
+	for (const unsigned int& polygonID : polygonIDs)
+	{
+		polygons[polygonID].uv1.u *= stretchInU;
+		polygons[polygonID].uv2.u *= stretchInU;
+		polygons[polygonID].uv3.u *= stretchInU;
+		polygons[polygonID].uv1.v *= stretchInV;
+		polygons[polygonID].uv2.v *= stretchInV;
+		polygons[polygonID].uv3.v *= stretchInV;
+	}
+
+	//Export textures
+	unsigned int leftCoordInt = floor(leftCoord * 255.0f + 0.5f);
+	unsigned int rightCoordInt = floor(rightCoord * 255.0f + 0.5f);
+	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
+	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
+
+	int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1));
+	if (texPageReturnValue != 0)
+	{
+		return false;
+	}
+	return true;
+}
+
 void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
@@ -577,8 +481,16 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 	for (unsigned short int p = 0; p < polygonCount; p++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		polygons.push_back(readPolygon(reader, objectName, outputFolder, p, materials, vertices));
+		polygons.push_back(readPolygon(reader, p, materials, vertices));
 		reader.seekg(uPolygonPosition + 0xC, reader.beg);
+	}
+
+	for (unsigned int m = 0; m < materials.size(); m++)
+	{
+		if (materials[m].realMaterial)
+		{
+			materials[m].properlyExported = UVPointCorrectionAndExport(m, objectName, outputFolder, materials[m], polygons);
+		}
 	}
 }
 

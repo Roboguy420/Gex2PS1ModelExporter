@@ -28,7 +28,7 @@ int initialiseVRM(std::string path)
 	return 0;
 }
 
-int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, std::string objectName, std::string outputFolder, unsigned int textureIndex)
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex)
 {
 	//Initialise texture page
 
@@ -134,15 +134,15 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	png_infop infoPointer = png_create_info_struct(pngPointer);
 	png_byte** rowPointers = NULL;
 
-	png_set_IHDR(pngPointer, infoPointer, 256, 256, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(pngPointer, infoPointer, (right - left + 1), (south - north + 1), 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-	rowPointers = static_cast<png_byte**>(png_malloc(pngPointer, 256 * sizeof(png_byte*)));
+	rowPointers = static_cast<png_byte**>(png_malloc(pngPointer, (south - north + 1) * sizeof(png_byte*)));
 
-	for (int y = 0; y < 256; y++)
+	for (unsigned int y = north; y <= south; y++)
 	{
-		png_byte* row = static_cast<png_byte*>(png_malloc(pngPointer, 1024));
-		rowPointers[y] = row;
-		for (int x = 0; x < 256; x++)
+		png_byte* row = static_cast<png_byte*>(png_malloc(pngPointer, (right - left + 1) * 4));
+		rowPointers[y - north] = row;
+		for (unsigned int x = left; x <= right; x++)
 		{
 			int pixel = pixels[y][x];
 			if (pixel > 255) //Out of range exception that I found in etvbutn_2, not sure what causes it. The material it occurs in is untextured on etvbutn_1...

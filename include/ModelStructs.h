@@ -24,6 +24,14 @@ struct UV
 {
 	float u, v;
 };
+bool sortUCoord(const UV &a, const UV &b)
+{
+	return a.u < b.u;
+}
+bool sortVCoord(const UV &a, const UV &b)
+{
+	return a.v < b.v;
+}
 
 struct PolygonStruct
 {
@@ -39,5 +47,4 @@ struct Material
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	unsigned int textureID;
-	UV uvCoordinates[4];
 };
