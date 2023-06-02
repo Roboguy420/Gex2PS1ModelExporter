@@ -15,11 +15,11 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
-		//return 1;
+		return 1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
 	}
-	std::string inputFile = "map5.drm"; //argv[1];
+	std::string inputFile = argv[1];
 	std::string outputFolder;
 
 	//Selected export -1 = everything
