@@ -5,6 +5,7 @@ This is a simple command line program written in C++ that exports Gex 2 PS1 mode
 Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1ModelExporter/releases). Download the latest release for your OS to get all the latest features.
 
 ## Usage
+### Model Exporter
 There are 3 parameters in the program, 1 is needed and the other 2 are optional.
 
 The 1st parameter is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
@@ -16,6 +17,14 @@ The 3rd parameter is the **model index**. This is the index of whichever model y
 Usage on the command line is as follows:
 ```
 > Gex2PS1ModelExporter.exe [input file] [output folder] [model index]
+```
+
+### Model Names Lister
+There is only 1 parameter in the program, which is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
+
+Usage on the command line is as follows:
+```
+>Gex2PS1ModelNamesLister.exe [input file]
 ```
 
 ## Getting the Model Files
@@ -91,7 +100,9 @@ Copy and paste _zconf.h_ and _zlib.h_ into _include/libpng_. Also copy and paste
 If you have followed these steps correctly, libpng should now be added as an external library.
 
 ### Compile using Clang
-If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ as the project. Click build and the program should be created.
+If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ and _Gex2PS1ModelNamesLister_ as the projects. Click build and the programs should be created.
+
+You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
 
 ## Compatibility
 Currently I have only tested the program on Windows 64-bit, and have only built a Windows release. However I am aiming to make the program cross-compatible with Linux.

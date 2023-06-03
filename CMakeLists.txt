@@ -37,3 +37,13 @@ target_link_libraries(Gex2PS1ModelExporter PUBLIC
 	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16.lib")
 
 target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/include")
+
+
+
+add_executable (Gex2PS1ModelNamesLister "Gex2PS1ModelNamesLister.cpp")
+
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET Gex2PS1ModelNamesLister PROPERTY CXX_STANDARD 20)
+endif()
+
+target_include_directories(Gex2PS1ModelNamesLister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
