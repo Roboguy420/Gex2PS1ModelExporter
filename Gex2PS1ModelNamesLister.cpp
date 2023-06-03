@@ -66,4 +66,6 @@ int main(int argc, char* argv[])
 
 		reader.seekg(nextPos, reader.beg);
 	}
+
+	return 0;
 }
