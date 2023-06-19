@@ -43,6 +43,7 @@ struct PolygonStruct
 struct Material
 {
 	bool realMaterial;
+	bool visible; //Only used for level geometry
 	bool properlyExported;
 	unsigned short int clutValue;
 	unsigned short int texturePage;

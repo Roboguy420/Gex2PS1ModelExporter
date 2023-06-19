@@ -10,6 +10,7 @@
 #include <vector>
 
 int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile);
+int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile);
 
 int main(int argc, char* argv[])
 {
@@ -150,13 +151,39 @@ int main(int argc, char* argv[])
 
 			reader.seekg(nextPos, reader.beg);
 		}
+		if (selectedModelExport < 1)
+		{
+			reader.seekg(0, reader.beg);
+			unsigned int levelData;
+			reader.read((char*)&levelData, sizeof(levelData));
+			reader.seekg(levelData, reader.beg);
+
+			int levelReturnCode = convertLevelToDAE(reader, outputFolder, inputFile);
+			if (returnCode != 6 && levelReturnCode == 1)
+			{
+				//At least 1 texture failed to export
+				returnCode = 6;
+			}
+
+			if (returnCode != 7 && levelReturnCode == 2)
+			{
+				//Model failed to export
+				returnCode = 7;
+			}
+			else
+			{
+				atLeastOneExportedSuccessfully = true;
+			}
+		}
 	}
 	catch (ifstreamoffset::failure e)
 	{
+		//End of stream exception
 		return 5;
 	}
 	if (!atLeastOneExportedSuccessfully)
 	{
+		//No models were successfully exported
 		return 8;
 	}
 	return returnCode;
@@ -255,7 +282,7 @@ Vertex readVertex(ifstreamoffset &reader, unsigned int v)
 	return thisVertex;
 }
 
-void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices)
+void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
 
@@ -268,21 +295,20 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 		reader.seekg(uPolygonPosition + 0xC, reader.beg);
 	}
 
-	std::vector<Bone> bones;
+	if (isObject)
+	{
+		std::vector<Bone> bones;
 
-	readArmature(reader, boneCount, boneStartAddress, bones);
+		readArmature(reader, boneCount, boneStartAddress, bones);
 
-	applyArmature(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
+		applyArmature(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
+	}
 }
 
 Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
 	thisMaterial.realMaterial = true;
-	thisMaterial.properlyExported = true;
-
-	byte u[4];
-	byte v[4];
 
 	reader.seekg(2, reader.cur);
 	reader.read((char*)&thisMaterial.clutValue, sizeof(thisMaterial.clutValue));
@@ -293,7 +319,7 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 	return thisMaterial;
 }
 
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	PolygonStruct thisPolygon;
 
@@ -309,39 +335,95 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 	thisPolygon.v2 = vertices[v2Index];
 	thisPolygon.v3 = vertices[v3Index];
 
-	reader.seekg(1, reader.cur);
+	Material thisMaterial;
+	bool realMaterial = true;
 
-	byte polygonFlags;
-	reader.read((char*)&polygonFlags, sizeof(polygonFlags));
-
-	if ((polygonFlags & 0x02) == 0x02)
+	if (isObject)
 	{
-		unsigned int materialPosition;
-		reader.read((char*)&materialPosition, sizeof(materialPosition));
+		reader.seekg(1, reader.cur);
 
-		reader.seekg(materialPosition, reader.beg);
+		byte polygonFlags;
+		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
+		thisMaterial.visible = true;
 
-		byte u[3];
-		byte v[3];
-		reader.read((char*)&u[0], 1);
-		reader.read((char*)&v[0], 1);
-		reader.seekg(2, reader.cur);
-		reader.read((char*)&u[1], 1);
-		reader.read((char*)&v[1], 1);
-		reader.seekg(2, reader.cur);
-		reader.read((char*)&u[2], 1);
-		reader.read((char*)&v[2], 1);
+		if ((polygonFlags & 0x02) == 0x02)
+		{
+			realMaterial = true;
+			unsigned int materialPosition;
+			reader.read((char*)&materialPosition, sizeof(materialPosition));
 
-		thisPolygon.uv1.u = u[0] / 255.0f;
-		thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
-		thisPolygon.uv2.u = u[1] / 255.0f;
-		thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
-		thisPolygon.uv3.u = u[2] / 255.0f;
-		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
+			reader.seekg(materialPosition, reader.beg);
 
-		reader.seekg(materialPosition, reader.beg);
-		Material thisMaterial = readMaterial(reader, p, materials);
+			byte u[3];
+			byte v[3];
+			reader.read((char*)&u[0], 1);
+			reader.read((char*)&v[0], 1);
+			reader.seekg(2, reader.cur);
+			reader.read((char*)&u[1], 1);
+			reader.read((char*)&v[1], 1);
+			reader.seekg(2, reader.cur);
+			reader.read((char*)&u[2], 1);
+			reader.read((char*)&v[2], 1);
 
+			thisPolygon.uv1.u = u[0] / 255.0f;
+			thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
+			thisPolygon.uv2.u = u[1] / 255.0f;
+			thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
+			thisPolygon.uv3.u = u[2] / 255.0f;
+			thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
+
+			reader.seekg(materialPosition, reader.beg);
+			thisMaterial = readMaterial(reader, p, materials);
+		}
+		else
+		{
+			//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
+			realMaterial = false;
+		}
+	}
+	else
+	{
+		byte visibleFlag;
+		reader.seekg(0x1, reader.cur);
+		reader.read((char*)&visibleFlag, sizeof(visibleFlag));
+		reader.seekg(0x8, reader.cur);
+
+		unsigned int materialAddress;
+		reader.read((char*)&materialAddress, sizeof(materialAddress));
+
+		if (materialAddress != 0xFFFF && (visibleFlag & 0x40) != 0x40)
+		{
+			reader.seekg(materialAddress, reader.beg);
+
+			byte u[3];
+			byte v[3];
+			reader.read((char*)&u[0], 1);
+			reader.read((char*)&v[0], 1);
+			reader.seekg(2, reader.cur);
+			reader.read((char*)&u[1], 1);
+			reader.read((char*)&v[1], 1);
+			reader.seekg(2, reader.cur);
+			reader.read((char*)&u[2], 1);
+			reader.read((char*)&v[2], 1);
+
+			thisPolygon.uv1.u = u[0] / 255.0f;
+			thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
+			thisPolygon.uv2.u = u[1] / 255.0f;
+			thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
+			thisPolygon.uv3.u = u[2] / 255.0f;
+			thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
+
+			reader.seekg(materialAddress, reader.beg);
+			thisMaterial = readMaterial(reader, p, materials);
+		}
+		else
+		{
+			realMaterial = false;
+		}
+	}
+
+	if (realMaterial)
+	{
 		bool newMaterial = true;
 		for (int m = 0; m < materials.size(); m++)
 		{
@@ -395,6 +477,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, std::vector<Ma
 		{
 			Material fakeMaterial;
 			fakeMaterial.realMaterial = false;
+			fakeMaterial.visible = true;
 			fakeMaterial.properlyExported = true;
 			materials.push_back(fakeMaterial);
 			thisPolygon.materialID = materials.size() - 1;
@@ -472,7 +555,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	return true;
 }
 
-void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int materialStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
 
@@ -481,8 +564,9 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 	for (unsigned short int p = 0; p < polygonCount; p++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		polygons.push_back(readPolygon(reader, p, materials, vertices));
-		reader.seekg(uPolygonPosition + 0xC, reader.beg);
+		polygons.push_back(readPolygon(reader, p, materialStartAddress, isObject, materials, vertices));
+		if (isObject) reader.seekg(uPolygonPosition + 0xC, reader.beg);
+		else reader.seekg(uPolygonPosition + 0x14, reader.beg);
 	}
 
 	for (unsigned int m = 0; m < materials.size(); m++)
@@ -494,10 +578,11 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 	}
 }
 
+
+int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
+
 int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::string objectName, std::string inputFile)
 {
-	int returnValue = 0;
-
 	unsigned short int vertexCount;
 	unsigned int vertexStartAddress;
 	unsigned short int polygonCount;
@@ -520,17 +605,67 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 	std::vector<Vertex> vertices;
 
-	readVertices(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices);
+	readVertices(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, true, vertices);
 
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
 
-	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, polygons, materials, vertices);
+	std::filesystem::create_directory(outputFolder);
 
-	unsigned int oldPosition = reader.tellg();
+	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, NULL, true, polygons, materials, vertices);
 
+	int exportReturn = XMLExport(outputFolder, objectName, polygons, materials);
+
+	return exportReturn;
+}
+
+int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile)
+{
+	std::string objectName = getFileNameWithoutExtension(inputFile, false);
+	unsigned int BSPTreeStartAddress; 
+	unsigned int vertexCount;
+	unsigned int polygonCount;
+	unsigned int vertexColourCount;
+	unsigned int vertexStartAddress;
+	unsigned int polygonStartAddress;
+	unsigned int vertexColourStartAddress;
+	unsigned int materialStartAddress;
+
+	reader.read((char*)&BSPTreeStartAddress, sizeof(BSPTreeStartAddress));
+	reader.seekg(0x14, reader.cur);
+	reader.read((char*)&vertexCount, sizeof(vertexCount));
+	reader.read((char*)&polygonCount, sizeof(polygonCount));
+	reader.read((char*)&vertexColourCount, sizeof(vertexColourCount));
+	reader.read((char*)&vertexStartAddress, sizeof(vertexStartAddress));
+	reader.read((char*)&polygonStartAddress, sizeof(polygonStartAddress));
+	reader.read((char*)&vertexColourStartAddress, sizeof(vertexColourStartAddress));
+	reader.read((char*)&materialStartAddress, sizeof(materialStartAddress));
+
+	std::vector<Vertex> vertices;
+
+	readVertices(reader, vertexCount, vertexStartAddress, NULL, NULL, false, vertices);
+
+	//Read vertex colours
+
+	std::vector<PolygonStruct> polygons;
+	std::vector<Material> materials;
+
+	std::filesystem::create_directory(outputFolder);
+
+	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, materialStartAddress, false, polygons, materials, vertices);
+
+	int exportReturn = XMLExport(outputFolder, objectName, polygons, materials);
+
+	return exportReturn;
+}
+
+
+int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials)
+{
 	//Tried using ASSIMP but there was a severe lack of tutorials on how to create a scene from scratch. Pretty much everything online focused solely on importing.
 	//So instead, here is my attempt at creating a DAE file using tinyxml2. Enjoy...
+
+	int returnValue = 0;
 
 	struct tm* timePointer;
 	std::time_t currentTime = std::time(0);
@@ -548,10 +683,10 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	rootNode->SetAttribute("version", "1.4.1");
 	tinyxml2::XMLElement* asset = outputDAE.NewElement("asset");
 	tinyxml2::XMLElement* contributor = outputDAE.NewElement("contributor");
-		tinyxml2::XMLElement* author = outputDAE.NewElement("author");
-		author->SetText("Crystal Dynamics");
-		tinyxml2::XMLElement* authoring_tool = outputDAE.NewElement("authoring_tool");
-		authoring_tool->SetText("Gex 2 PS1 Model Exporter");
+	tinyxml2::XMLElement* author = outputDAE.NewElement("author");
+	author->SetText("Crystal Dynamics");
+	tinyxml2::XMLElement* authoring_tool = outputDAE.NewElement("authoring_tool");
+	authoring_tool->SetText("Gex 2 PS1 Model Exporter");
 	contributor->LinkEndChild(author);
 	contributor->LinkEndChild(authoring_tool);
 	tinyxml2::XMLElement* creationDate = outputDAE.NewElement("created");
@@ -609,7 +744,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 			tinyxml2::XMLElement* image = outputDAE.NewElement("image");
 			image->SetAttribute("id", std::format("{}-{}-diffuse-image", objectName, materials[m].textureID).c_str());
 			tinyxml2::XMLElement* init_fromDiffuseImage = outputDAE.NewElement("init_from");
-			init_fromDiffuseImage->SetText(std::format("{}-tex{}.png", objectName, materials[m].textureID+1).c_str());
+			init_fromDiffuseImage->SetText(std::format("{}-tex{}.png", objectName, materials[m].textureID + 1).c_str());
 			image->LinkEndChild(init_fromDiffuseImage);
 			library_images->LinkEndChild(image);
 		}
@@ -823,7 +958,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 		//Vertices
 
-		tinyxml2::XMLElement *xVertices = outputDAE.NewElement("vertices");
+		tinyxml2::XMLElement* xVertices = outputDAE.NewElement("vertices");
 		xVertices->SetAttribute("id", std::format("meshId{}-vertices", m).c_str());
 		tinyxml2::XMLElement* input = outputDAE.NewElement("input");
 		input->SetAttribute("semantic", "POSITION");
@@ -832,7 +967,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 		mesh->LinkEndChild(xVertices);
 
 		//Polygons
-		
+
 		tinyxml2::XMLElement* polylist = outputDAE.NewElement("polylist");
 		polylist->SetAttribute("count", meshPolygons.size());
 		polylist->SetAttribute("material", "defaultMaterial");
@@ -857,7 +992,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 		for (int p = 0; p < meshPolygons.size(); p++)
 		{
 			vCountString += "3 ";
-			polyString += std::format("{} {} {} ", (p*3), (p*3) + 1, (p*3) + 2);
+			polyString += std::format("{} {} {} ", (p * 3), (p * 3) + 1, (p * 3) + 2);
 		}
 		vCount->SetText(vCountString.c_str());
 		pPolylist->SetText(polyString.c_str());
@@ -915,7 +1050,6 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 	outputDAE.LinkEndChild(rootNode);
 
-	std::filesystem::create_directory(outputFolder);
 	if (std::filesystem::exists(outputFolder))
 	{
 		outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str());
