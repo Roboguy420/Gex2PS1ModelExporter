@@ -1,5 +1,5 @@
 # Gex 2 PS1 Model Exporter
-This is a simple command line program written in C++ that exports Gex 2 PS1 model files. This is my first ever C++ program so it's a little rough around the edges and has some novice bits of code, but at the end of the day it works and I'm glad it does.
+This is a simple command line program written in C++ that exports Gex 2 PS1 model files to COLLADA .dae model files. This is my first ever C++ program so it's a little rough around the edges and has some novice bits of code, but at the end of the day it works and I'm glad it does.
 
 ## Download
 Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1ModelExporter/releases). Download the latest release for your OS to get all the latest features.
@@ -8,7 +8,7 @@ Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1Mod
 ### Model Exporter
 There are 3 parameters in the program, 1 is needed and the other 2 are optional.
 
-The 1st parameter is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
+The 1st parameter is the **input file**. This is the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
 
 The 2nd parameter is the **output folder**. This is the folder where the models will be output. Note that this does not create a folder with the name of the parameter; the folder must be preexisting in order to work. If there is no 2nd parameter, it uses the current working directory.
 
@@ -20,11 +20,11 @@ Usage on the command line is as follows:
 ```
 
 ### Model Names Lister
-There is only 1 parameter in the program, which is the **input file**. This is the model file from gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
+There is only 1 parameter in the program, which is the **input file**. This is the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
 
 Usage on the command line is as follows:
 ```
->Gex2PS1ModelNamesLister.exe [input file]
+> Gex2PS1ModelNamesLister.exe [input file]
 ```
 
 ## Getting the Model Files
