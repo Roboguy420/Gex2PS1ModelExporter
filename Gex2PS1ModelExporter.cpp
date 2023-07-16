@@ -383,15 +383,17 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	}
 	else
 	{
-		byte visibleFlag;
+		byte polygonFlags;
 		reader.seekg(0x1, reader.cur);
-		reader.read((char*)&visibleFlag, sizeof(visibleFlag));
+		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
 		reader.seekg(0x8, reader.cur);
 
 		unsigned int materialAddress;
 		reader.read((char*)&materialAddress, sizeof(materialAddress));
 
-		if (materialAddress != 0xFFFF && (visibleFlag & 0x40) != 0x40)
+		//0x02 = Animated texture flag
+		//0x80 = Invisible texture flag
+		if (materialAddress != 0xFFFF && (polygonFlags & 0x80) != 0x80)
 		{
 			reader.seekg(materialAddress, reader.beg);
 
