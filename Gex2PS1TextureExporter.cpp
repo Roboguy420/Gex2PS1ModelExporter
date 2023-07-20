@@ -99,7 +99,6 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	colourTableX %= 512;
 	colourTableX += 512;
 	colourTableX %= 512;
-	//unsigned int colours[256];
 	std::vector<unsigned int> colours;
 
 	for (int x = 0; x < colourLimit; x++)
@@ -130,7 +129,6 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			alpha = 0;
 		}
 
-		//colours[x] = alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue;
 		colours.push_back(alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue);
 	}
 
