@@ -305,6 +305,30 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 	}
 }
 
+AnimationSubframe readAnimationSubFrame(ifstreamoffset &reader, unsigned int baseMaterialAddress)
+{
+	AnimationSubframe subframe;
+
+	byte u[3];
+	byte v[3];
+	reader.read((char*)&u[0], 1);
+	reader.read((char*)&v[0], 1);
+	reader.read((char*)&subframe.clutValue, sizeof(subframe.clutValue));
+	reader.read((char*)&u[1], 1);
+	reader.read((char*)&v[1], 1);
+	reader.read((char*)&subframe.texturePage, sizeof(subframe.texturePage));
+	reader.read((char*)&u[2], 1);
+	reader.read((char*)&v[2], 1);
+
+	subframe.UVs.push_back({ u[0] / 255.0f, (255 - v[0]) / 255.0f });
+	subframe.UVs.push_back({ u[1] / 255.0f, (255 - v[1]) / 255.0f });
+	subframe.UVs.push_back({ u[2] / 255.0f, (255 - v[2]) / 255.0f });
+
+	subframe.baseMaterialAddress = baseMaterialAddress;
+
+	return subframe;
+}
+
 Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
@@ -319,7 +343,7 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 	return thisMaterial;
 }
 
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<AnimationSubframe>& subframes)
 {
 	PolygonStruct thisPolygon;
 
@@ -338,6 +362,8 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	Material thisMaterial;
 	bool realMaterial = true;
 
+	unsigned int materialAddress;
+
 	if (isObject)
 	{
 		reader.seekg(1, reader.cur);
@@ -349,10 +375,9 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 		if ((polygonFlags & 0x02) == 0x02)
 		{
 			realMaterial = true;
-			unsigned int materialPosition;
-			reader.read((char*)&materialPosition, sizeof(materialPosition));
+			reader.read((char*)&materialAddress, sizeof(materialAddress));
 
-			reader.seekg(materialPosition, reader.beg);
+			reader.seekg(materialAddress, reader.beg);
 
 			byte u[3];
 			byte v[3];
@@ -372,7 +397,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 			thisPolygon.uv3.u = u[2] / 255.0f;
 			thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
 
-			reader.seekg(materialPosition, reader.beg);
+			reader.seekg(materialAddress, reader.beg);
 			thisMaterial = readMaterial(reader, p, materials);
 		}
 		else
@@ -383,15 +408,16 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	}
 	else
 	{
-		byte visibleFlag;
+		byte polygonFlags;
 		reader.seekg(0x1, reader.cur);
-		reader.read((char*)&visibleFlag, sizeof(visibleFlag));
+		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
 		reader.seekg(0x8, reader.cur);
 
-		unsigned int materialAddress;
 		reader.read((char*)&materialAddress, sizeof(materialAddress));
 
-		if (materialAddress != 0xFFFF && (visibleFlag & 0x40) != 0x40)
+		//0x02 = Animated texture flag
+		//0x80 = Invisible texture flag
+		if (materialAddress != 0xFFFF && (polygonFlags & 0x80) != 0x80)
 		{
 			reader.seekg(materialAddress, reader.beg);
 
@@ -445,10 +471,11 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 				break;
 			}
 		}
+
 		if (newMaterial)
 		{
 			unsigned int textureCount = 0;
-			for (int i = 0; i < materials.size(); i++)
+			for (unsigned int i = 0; i < materials.size(); i++)
 			{
 				if (materials[i].realMaterial)
 				{
@@ -456,6 +483,40 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 				}
 			}
 			thisMaterial.textureID = textureCount;
+
+			//Find CLUT value and texture page for frame 1, add all subframes to material
+			unsigned int subframeIncrement = 0;
+			int subframeClutValue = -1;
+			int subframeTexturePage = -1;
+			for (unsigned int i = 0; i < subframes.size(); i++)
+			{
+				if (subframes[i].baseMaterialAddress == materialAddress)
+				{
+					subframes[i].subframeID = subframeIncrement;
+					thisMaterial.subframes.push_back(subframes[i]);
+					subframeIncrement++;
+					if (subframeClutValue == -1)
+					{
+						subframeClutValue = subframes[i].clutValue;
+						subframeTexturePage = subframes[i].texturePage;
+					}
+				}
+			}
+
+			//Find all subframes with same CLUT and texture page, and add the UVs to the material subframes
+			unsigned int a = subframes.size();
+			unsigned int b = 0;
+			for (unsigned int i = 0; i < subframes.size(); i++)
+			{
+				if (subframes[i].subframeID == 0 && subframes[i].clutValue == subframeClutValue && subframes[i].texturePage == subframeTexturePage && subframes[i].baseMaterialAddress != materialAddress)
+				{
+					for (unsigned int j = 0; j < subframeIncrement * 3; j++)
+					{
+						thisMaterial.subframes[j / 3].UVs.push_back(subframes[i + (j / 3)].UVs[j % 3]);
+					}
+				}
+			}
+
 			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
@@ -530,6 +591,10 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	//Stretch up to top right
 	float stretchInU = 1.0f / (rightCoord - leftCoord);
 	float stretchInV = 1.0f / (northCoord - southCoord);
+	if (rightCoord - leftCoord == 0)
+		stretchInU = 0.0f;
+	if (northCoord - southCoord == 0)
+		stretchInV = 0.0f;
 
 	for (const unsigned int& polygonID : polygonIDs)
 	{
@@ -547,7 +612,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
-	int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1));
+	int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), 0);
 	if (texPageReturnValue != 0)
 	{
 		return false;
@@ -555,16 +620,64 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	return true;
 }
 
-void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int materialStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+bool subframePointCorrectionAndExport(unsigned int textureID, std::string objectName, std::string outputFolder, AnimationSubframe subframe)
+{
+	std::sort(subframe.UVs.begin(), subframe.UVs.end(), sortUCoord);
+	float leftCoord = subframe.UVs[0].u;
+	float rightCoord = subframe.UVs[subframe.UVs.size() - 1].u;
+	std::sort(subframe.UVs.begin(), subframe.UVs.end(), sortVCoord);
+	float southCoord = subframe.UVs[0].v;
+	float northCoord = subframe.UVs[subframe.UVs.size() - 1].v;
+
+	unsigned int leftCoordInt = floor(leftCoord * 255.0f + 0.5f);
+	unsigned int rightCoordInt = floor(rightCoord * 255.0f + 0.5f);
+	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
+	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
+
+	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), (subframe.subframeID + 1));
+	if (texPageReturnValue != 0)
+	{
+		return false;
+	}
+	return true;
+}
+
+void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
+
+	std::vector<AnimationSubframe> subframes;
+
+	if (isObject && textureAnimationsStartAddress != 0)
+	{
+		reader.seekg(textureAnimationsStartAddress, reader.beg);
+		unsigned int textureAnimationsCount;
+		reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
+		for (int i = 0; i < textureAnimationsCount; i++)
+		{
+			unsigned int uTextureAnimationsPosition = reader.tellg();
+			unsigned int materialAddress;
+			unsigned int subframesCount;
+			reader.read((char*)&materialAddress, sizeof(materialAddress));
+			reader.read((char*)&subframesCount, sizeof(subframesCount));
+			reader.seekg(materialAddress + 0x10, reader.beg);
+			for (int m = 0; m < subframesCount; m++)
+			{
+				unsigned int uSubframePosition = reader.tellg();
+				subframes.push_back(readAnimationSubFrame(reader, materialAddress));
+				subframes[subframes.size() - 1].subframeID = m;
+				reader.seekg(uSubframePosition + 0x10, reader.beg);
+			}
+			reader.seekg(uTextureAnimationsPosition + 0xC, reader.beg);
+		}
+	}
 
 	reader.seekg(polygonStartAddress, reader.beg);
 
 	for (unsigned short int p = 0; p < polygonCount; p++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		polygons.push_back(readPolygon(reader, p, materialStartAddress, isObject, materials, vertices));
+		polygons.push_back(readPolygon(reader, p, textureAnimationsStartAddress, isObject, materials, vertices, subframes));
 		if (isObject) reader.seekg(uPolygonPosition + 0xC, reader.beg);
 		else reader.seekg(uPolygonPosition + 0x14, reader.beg);
 	}
@@ -574,6 +687,11 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 		if (materials[m].realMaterial)
 		{
 			materials[m].properlyExported = UVPointCorrectionAndExport(m, objectName, outputFolder, materials[m], polygons);
+
+			for (unsigned int i = 0; i < materials[m].subframes.size(); i++)
+			{
+				subframePointCorrectionAndExport(materials[m].textureID, objectName, outputFolder, materials[m].subframes[i]);
+			}
 		}
 	}
 }
@@ -589,7 +707,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	unsigned int polygonStartAddress;
 	unsigned short int boneCount;
 	unsigned int boneStartAddress;
-	unsigned int materialStartAddress;
+	unsigned int textureAnimationsStartAddress;
 
 	reader.read((char*)&vertexCount, sizeof(vertexCount));
 	reader.seekg(2, reader.cur);
@@ -601,7 +719,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 	reader.read((char*)&boneCount, sizeof(boneCount));
 	reader.seekg(2, reader.cur);
 	reader.read((char*)&boneStartAddress, sizeof(boneStartAddress));
-	reader.read((char*)&materialStartAddress, sizeof(materialStartAddress));
+	reader.read((char*)&textureAnimationsStartAddress, sizeof(textureAnimationsStartAddress));
 
 	std::vector<Vertex> vertices;
 
@@ -612,7 +730,7 @@ int convertObjToDAE(ifstreamoffset &reader, std::string outputFolder, std::strin
 
 	std::filesystem::create_directory(outputFolder);
 
-	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, NULL, true, polygons, materials, vertices);
+	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, textureAnimationsStartAddress, true, polygons, materials, vertices);
 
 	int exportReturn = XMLExport(outputFolder, objectName, polygons, materials);
 

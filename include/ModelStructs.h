@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 //"Intermediary" model structures
 
 struct Vertex
@@ -40,6 +42,15 @@ struct PolygonStruct
 	UV uv1, uv2, uv3;
 };
 
+struct AnimationSubframe
+{
+	unsigned short int clutValue;
+	unsigned short int texturePage;
+	std::vector<UV> UVs;
+	unsigned int baseMaterialAddress;
+	unsigned int subframeID;
+};
+
 struct Material
 {
 	bool realMaterial;
@@ -48,4 +59,5 @@ struct Material
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	unsigned int textureID;
+	std::vector<AnimationSubframe> subframes;
 };

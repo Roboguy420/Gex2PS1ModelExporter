@@ -28,7 +28,7 @@ int initialiseVRM(std::string path)
 	return 0;
 }
 
-int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex)
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int subframe)
 {
 	//Initialise texture page
 
@@ -38,6 +38,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	texturePageX += 512;
 	texturePageX %= 512;
 	unsigned short int** pixels = new unsigned short int*[256];
+	unsigned int colourLimit = 16;
 
 	for (int y = 0; y < 256; y++)
 	{
@@ -50,6 +51,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		{
 			if (((texturePage >> 7) & 0x3) == 0) // 4 bit
 			{
+				colourLimit = 16;
 				unsigned short int val = 0;
 				int wrappedWidth = (texturePageX + (x / 4)) % 512;
 				if ((texturePageY + y) < 512)
@@ -64,6 +66,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			}
 			else if (((texturePage >> 7) & 0x3) == 1) // 8 bit
 			{
+				colourLimit = 256;
 				unsigned short int val = 0;
 				int wrappedWidth = (texturePageX + (x / 2)) % 512;
 				if ((texturePageY + y) < 512)
@@ -76,6 +79,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			}
 			else if (((texturePage >> 7) & 0x3) == 2) // 16 bit
 			{
+				colourLimit = 65536;
 				unsigned short int val = 0;
 				int wrappedWidth = (texturePageX + x) % 512;
 				if ((texturePageY + y) < 512)
@@ -95,9 +99,10 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	colourTableX %= 512;
 	colourTableX += 512;
 	colourTableX %= 512;
-	unsigned int colours[256];
+	//unsigned int colours[256];
+	std::vector<unsigned int> colours;
 
-	for (int x = 0; x < 256; x++)
+	for (int x = 0; x < colourLimit; x++)
 	{
 		unsigned short int val = 0;
 		int wrappedWidth = (colourTableX + x) % 512;
@@ -125,7 +130,8 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			alpha = 0;
 		}
 
-		colours[x] = alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue;
+		//colours[x] = alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue;
+		colours.push_back(alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue);
 	}
 
 	//Write to file
@@ -145,23 +151,22 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		for (unsigned int x = left; x <= right; x++)
 		{
 			int pixel = pixels[y][x];
-			if (pixel > 255) //Out of range exception that I found in etvbutn_2, not sure what causes it. The material it occurs in is untextured on etvbutn_1...
-			{
-				return 1;
-			}
-			else
-			{
-				*row++ = (colours[pixel] & 0x00FF0000) >> 16;
-				*row++ = (colours[pixel] & 0x0000FF00) >> 8;
-				*row++ = (colours[pixel] & 0x000000FF);
-				*row++ = (colours[pixel] & 0xFF000000) >> 24;
-			}
+			*row++ = (colours[pixel] & 0x00FF0000) >> 16;
+			*row++ = (colours[pixel] & 0x0000FF00) >> 8;
+			*row++ = (colours[pixel] & 0x000000FF);
+			*row++ = (colours[pixel] & 0xFF000000) >> 24;
 		}
 	}
 
 	FILE* writeFile;
 
-	writeFile = fopen(std::format("{}{}{}-tex{}.png", outputFolder, directorySeparator(), objectName, textureIndex).c_str(), "wb");
+	std::string textureIndexString = std::format("{}", textureIndex);
+	if (subframe > 0)
+	{
+		textureIndexString += std::format("-{}", subframe);
+	}
+
+	writeFile = fopen(std::format("{}{}{}-tex{}.png", outputFolder, directorySeparator(), objectName, textureIndexString).c_str(), "wb");
 	if (!writeFile)
 	{
 		return 1;
