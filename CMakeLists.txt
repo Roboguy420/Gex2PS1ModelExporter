@@ -47,3 +47,19 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 
 target_include_directories(Gex2PS1ModelNamesLister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+
+
+add_executable(TextureDebug ".debugTextureDebug.cpp")
+
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET TextureDebug PROPERTY CXX_STANDARD 20)
+endif()
+
+target_include_directories(TextureDebug PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+target_link_libraries(TextureDebug PUBLIC
+	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16d.lib"
+	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16.lib")
+
+target_include_directories(TextureDebug PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/include")

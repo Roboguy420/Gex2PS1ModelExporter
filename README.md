@@ -45,7 +45,7 @@ The return values are as follows:
 * **3:** Failed to read input file
 * **4:** Output folder not found/failed to write to
 * **5:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
-* **6:** At least 1 texture failed to export - You are likely to get this a lot because one of etvbutn_2's textures does not export properly. This object is in virtually all the game's model files
+* **6:** At least 1 texture failed to export
 * **7:** At least 1 successful export, others had failures
 * **8:** No successful exports, all attempts failed
 
