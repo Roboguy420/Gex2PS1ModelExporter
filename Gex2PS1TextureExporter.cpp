@@ -167,6 +167,11 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	writeFile = fopen(std::format("{}{}{}-tex{}.png", outputFolder, directorySeparator(), objectName, textureIndexString).c_str(), "wb");
 	if (!writeFile)
 	{
+		for (int y = 0; y < 256; y++)
+		{
+			delete (pixels[y]);
+		}
+		png_destroy_write_struct(&pngPointer, &infoPointer);
 		return 1;
 	}
 
@@ -175,6 +180,12 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	png_write_png(pngPointer, infoPointer, PNG_TRANSFORM_IDENTITY, NULL);
 
 	fclose(writeFile);
+
+	for (int y = 0; y < 256; y++)
+	{
+		delete (pixels[y]);
+	}
+	png_destroy_write_struct(&pngPointer, &infoPointer);
 
 	return 0;
 }
