@@ -16,7 +16,8 @@ endif()
 project ("Gex2PS1ModelExporter")
 
 # Add source to this project's executable.
-add_executable (Gex2PS1ModelExporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp")
+file(GLOB HEADER_FILES_EXPORTER include/*.h)
+add_executable (Gex2PS1ModelExporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Gex2PS1ModelExporter PROPERTY CXX_STANDARD 20)
@@ -40,7 +41,8 @@ target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_D
 
 
 
-add_executable (Gex2PS1ModelNamesLister "Gex2PS1ModelNamesLister.cpp")
+set(HEADER_FILES_NAMES_LISTER include/Gex2PS1ModelExporter.h)
+add_executable (Gex2PS1ModelNamesLister "Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Gex2PS1ModelNamesLister PROPERTY CXX_STANDARD 20)
@@ -50,7 +52,8 @@ target_include_directories(Gex2PS1ModelNamesLister PRIVATE "${CMAKE_CURRENT_SOUR
 
 
 
-add_executable(TextureDebug ".debugTextureDebug.cpp")
+set(HEADER_FILES_TEXTURE_DEBUG include/Gex2PS1ModelExporter.h)
+add_executable(TextureDebug ".debugTextureDebug.cpp" ${HEADER_FILES_TEXTURE_DEBUG})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET TextureDebug PROPERTY CXX_STANDARD 20)
