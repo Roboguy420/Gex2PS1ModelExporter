@@ -90,11 +90,6 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		subframeCheckAlreadyDone[i] = false;
 	}
 
-	if (textureIndex == 45)
-	{
-		int a = 0;
-	}
-
 	for (int y = 0; y < 256; y++)
 	{
 		for (int x = 0; x < 256;)
@@ -149,11 +144,6 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			}
 			x++;
 		}
-	}
-
-	if (textureIndex == 45)
-	{
-		int a = 0;
 	}
 
 	free(subframeCheckAlreadyDone);
