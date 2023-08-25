@@ -11,6 +11,7 @@
 
 int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile);
 int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile);
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes);
 
 int main(int argc, char* argv[])
 {
@@ -305,9 +306,9 @@ void readVertices(ifstreamoffset &reader, unsigned short int vertexCount, unsign
 	}
 }
 
-AnimationSubframe readAnimationSubFrame(ifstreamoffset &reader, unsigned int baseMaterialAddress)
+ObjectAnimationSubframe readObjectAnimationSubFrame(ifstreamoffset &reader, unsigned int baseMaterialAddress)
 {
-	AnimationSubframe subframe;
+	ObjectAnimationSubframe subframe;
 
 	byte u[3];
 	byte v[3];
@@ -329,6 +330,53 @@ AnimationSubframe readAnimationSubFrame(ifstreamoffset &reader, unsigned int bas
 	return subframe;
 }
 
+LevelAnimationSubframe* readLevelAnimationSubFrames(ifstreamoffset &reader, unsigned int baseMaterialAddress)
+{
+	LevelAnimationSubframe* subframes = new LevelAnimationSubframe[2];
+
+	reader.read((char*)&(subframes[0].xCoordinateDestination), sizeof(subframes[0].xCoordinateDestination));
+	reader.read((char*)&(subframes[0].yCoordinateDestination), sizeof(subframes[0].yCoordinateDestination));
+	reader.read((char*)&(subframes[0].xSize), sizeof(subframes[0].xSize));
+	reader.read((char*)&(subframes[0].ySize), sizeof(subframes[0].ySize));
+
+	reader.read((char*)&(subframes[1].xCoordinateDestination), sizeof(subframes[1].xCoordinateDestination));
+	reader.read((char*)&(subframes[1].yCoordinateDestination), sizeof(subframes[1].yCoordinateDestination));
+	reader.read((char*)&(subframes[1].xSize), sizeof(subframes[1].xSize));
+	reader.read((char*)&(subframes[1].ySize), sizeof(subframes[1].ySize));
+
+	subframes[0].xCoordinateDestination -= 0x200;
+	subframes[1].xCoordinateDestination -= 0x200;
+
+	reader.seekg(8, reader.cur);
+
+	unsigned int numberOfFrames;
+	reader.read((char*)&numberOfFrames, sizeof(numberOfFrames));
+	reader.seekg(4, reader.cur);
+
+	for (unsigned int frame = 0; frame < numberOfFrames; frame++)
+	{
+		unsigned short int xCoordinateSource1, yCoordinateSource1, xCoordinateSource2, yCoordinateSource2;
+
+		reader.read((char*)&xCoordinateSource1, sizeof(xCoordinateSource1));
+		reader.read((char*)&yCoordinateSource1, sizeof(yCoordinateSource1));
+		reader.read((char*)&xCoordinateSource2, sizeof(xCoordinateSource2));
+		reader.read((char*)&yCoordinateSource2, sizeof(yCoordinateSource2));
+
+		xCoordinateSource1 -= 0x200;
+		xCoordinateSource2 -= 0x200;
+
+		subframes[0].xCoordinateSources.push_back(xCoordinateSource1);
+		subframes[0].yCoordinateSources.push_back(yCoordinateSource1);
+		subframes[1].xCoordinateSources.push_back(xCoordinateSource2);
+		subframes[1].yCoordinateSources.push_back(yCoordinateSource2);
+	}
+
+	subframes[0].subframeExportsThis = false;
+	subframes[1].subframeExportsThis = false;
+
+	return subframes;
+}
+
 Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
@@ -343,7 +391,7 @@ Material readMaterial(ifstreamoffset &reader, unsigned int p, std::vector<Materi
 	return thisMaterial;
 }
 
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<AnimationSubframe>& subframes)
+PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
 {
 	PolygonStruct thisPolygon;
 
@@ -484,35 +532,38 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 			}
 			thisMaterial.textureID = textureCount;
 
-			//Find CLUT value and texture page for frame 1, add all subframes to material
-			unsigned int subframeIncrement = 0;
-			int subframeClutValue = -1;
-			int subframeTexturePage = -1;
-			for (unsigned int i = 0; i < subframes.size(); i++)
+			if (isObject)
 			{
-				if (subframes[i].baseMaterialAddress == materialAddress)
+				//Find CLUT value and texture page for frame 1, add all subframes to material
+				unsigned int subframeIncrement = 0;
+				int subframeClutValue = -1;
+				int subframeTexturePage = -1;
+				for (unsigned int i = 0; i < subframes.size(); i++)
 				{
-					subframes[i].subframeID = subframeIncrement;
-					thisMaterial.subframes.push_back(subframes[i]);
-					subframeIncrement++;
-					if (subframeClutValue == -1)
+					if (subframes[i].baseMaterialAddress == materialAddress)
 					{
-						subframeClutValue = subframes[i].clutValue;
-						subframeTexturePage = subframes[i].texturePage;
+						subframes[i].subframeID = subframeIncrement;
+						thisMaterial.objectSubframes.push_back(subframes[i]);
+						subframeIncrement++;
+						if (subframeClutValue == -1)
+						{
+							subframeClutValue = subframes[i].clutValue;
+							subframeTexturePage = subframes[i].texturePage;
+						}
 					}
 				}
-			}
 
-			//Find all subframes with same CLUT and texture page, and add the UVs to the material subframes
-			unsigned int a = subframes.size();
-			unsigned int b = 0;
-			for (unsigned int i = 0; i < subframes.size(); i++)
-			{
-				if (subframes[i].subframeID == 0 && subframes[i].clutValue == subframeClutValue && subframes[i].texturePage == subframeTexturePage && subframes[i].baseMaterialAddress != materialAddress)
+				//Find all subframes with same CLUT and texture page, and add the UVs to the material subframes
+				unsigned int a = subframes.size();
+				unsigned int b = 0;
+				for (unsigned int i = 0; i < subframes.size(); i++)
 				{
-					for (unsigned int j = 0; j < subframeIncrement * 3; j++)
+					if (subframes[i].subframeID == 0 && subframes[i].clutValue == subframeClutValue && subframes[i].texturePage == subframeTexturePage && subframes[i].baseMaterialAddress != materialAddress)
 					{
-						thisMaterial.subframes[j / 3].UVs.push_back(subframes[i + (j / 3)].UVs[j % 3]);
+						for (unsigned int j = 0; j < subframeIncrement * 3; j++)
+						{
+							thisMaterial.objectSubframes[j / 3].UVs.push_back(subframes[i + (j / 3)].UVs[j % 3]);
+						}
 					}
 				}
 			}
@@ -554,7 +605,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	return thisPolygon;
 }
 
-bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons)
+bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes)
 {
 	std::vector<UV> materialUVs;
 	std::vector<unsigned int> polygonIDs;
@@ -612,7 +663,29 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
-	int texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), 0);
+	int texPageReturnValue;
+	texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, 0, levelSubframes);
+	if (exportLevelAnimations)
+	{
+		std::vector<LevelAnimationSubframe> empty;
+		for (unsigned int i = 0; i < levelSubframes.size(); i+= 2)
+		{
+			if (levelSubframes[i].subframeExportsThis)
+			{
+				for (unsigned int j = 0; j < levelSubframes[i].xCoordinateSources.size(); j++)
+				{
+					copyRectangleInVRM(levelSubframes[i].xCoordinateDestination, levelSubframes[i].yCoordinateDestination, levelSubframes[i].xSize,
+						levelSubframes[i].ySize, levelSubframes[i].xCoordinateSources[j], levelSubframes[i].yCoordinateSources[j], true);
+					copyRectangleInVRM(levelSubframes[i + 1].xCoordinateDestination, levelSubframes[i + 1].yCoordinateDestination, levelSubframes[i + 1].xSize,
+						levelSubframes[i + 1].ySize, levelSubframes[i + 1].xCoordinateSources[j], levelSubframes[i + 1].yCoordinateSources[j], true);
+
+					texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, j + 1, empty);
+				}
+			}
+			levelSubframes[i].subframeExportsThis = false;
+		}
+		resetModifiedVRAM();
+	}
 	if (texPageReturnValue != 0)
 	{
 		return false;
@@ -620,7 +693,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, std::string objectName,
 	return true;
 }
 
-bool subframePointCorrectionAndExport(unsigned int textureID, std::string objectName, std::string outputFolder, AnimationSubframe subframe)
+bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe)
 {
 	std::sort(subframe.UVs.begin(), subframe.UVs.end(), sortUCoord);
 	float leftCoord = subframe.UVs[0].u;
@@ -634,7 +707,8 @@ bool subframePointCorrectionAndExport(unsigned int textureID, std::string object
 	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
-	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), (subframe.subframeID + 1));
+	std::vector<LevelAnimationSubframe> empty;
+	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, materialID, (textureID + 1), (subframe.subframeID + 1), empty);
 	if (texPageReturnValue != 0)
 	{
 		return false;
@@ -646,29 +720,51 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
 
-	std::vector<AnimationSubframe> subframes;
+	std::vector<ObjectAnimationSubframe> objectSubframes;
+	std::vector<LevelAnimationSubframe> levelSubframes;
 
-	if (isObject && textureAnimationsStartAddress != 0)
+	if (textureAnimationsStartAddress != 0)
 	{
-		reader.seekg(textureAnimationsStartAddress, reader.beg);
-		unsigned int textureAnimationsCount;
-		reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
-		for (int i = 0; i < textureAnimationsCount; i++)
+		if (isObject)
 		{
-			unsigned int uTextureAnimationsPosition = reader.tellg();
-			unsigned int materialAddress;
-			unsigned int subframesCount;
-			reader.read((char*)&materialAddress, sizeof(materialAddress));
-			reader.read((char*)&subframesCount, sizeof(subframesCount));
-			reader.seekg(materialAddress + 0x10, reader.beg);
-			for (int m = 0; m < subframesCount; m++)
+			reader.seekg(textureAnimationsStartAddress, reader.beg);
+			unsigned int textureAnimationsCount;
+			reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
+			for (int i = 0; i < textureAnimationsCount; i++)
 			{
-				unsigned int uSubframePosition = reader.tellg();
-				subframes.push_back(readAnimationSubFrame(reader, materialAddress));
-				subframes[subframes.size() - 1].subframeID = m;
-				reader.seekg(uSubframePosition + 0x10, reader.beg);
+				unsigned int uTextureAnimationsPosition = reader.tellg();
+				unsigned int materialAddress;
+				unsigned int subframesCount;
+				reader.read((char*)&materialAddress, sizeof(materialAddress));
+				reader.read((char*)&subframesCount, sizeof(subframesCount));
+				reader.seekg(materialAddress + 0x10, reader.beg);
+				for (int m = 0; m < subframesCount; m++)
+				{
+					unsigned int uSubframePosition = reader.tellg();
+					objectSubframes.push_back(readObjectAnimationSubFrame(reader, materialAddress));
+					objectSubframes[objectSubframes.size() - 1].subframeID = m;
+					reader.seekg(uSubframePosition + 0x10, reader.beg);
+				}
+				reader.seekg(uTextureAnimationsPosition + 0xC, reader.beg);
 			}
-			reader.seekg(uTextureAnimationsPosition + 0xC, reader.beg);
+		}
+		else
+		{
+			reader.seekg(textureAnimationsStartAddress, reader.beg);
+			unsigned int textureAnimationsCount;
+			reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
+			int a = 0;
+			for (unsigned int i = 0; i < textureAnimationsCount; i++)
+			{
+				unsigned int uTextureAnimationsPosition = reader.tellg();
+				unsigned int materialAddress;
+				reader.read((char*)&materialAddress, sizeof(materialAddress));
+				reader.seekg(materialAddress, reader.beg);
+				LevelAnimationSubframe* subframesPointer = readLevelAnimationSubFrames(reader, materialAddress);
+				levelSubframes.push_back(subframesPointer[0]);
+				levelSubframes.push_back(subframesPointer[1]);
+				reader.seekg(uTextureAnimationsPosition + 4, reader.beg);
+			}
 		}
 	}
 
@@ -677,20 +773,23 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 	for (unsigned short int p = 0; p < polygonCount; p++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		polygons.push_back(readPolygon(reader, p, textureAnimationsStartAddress, isObject, materials, vertices, subframes));
+		polygons.push_back(readPolygon(reader, p, textureAnimationsStartAddress, isObject, materials, vertices, objectSubframes));
 		if (isObject) reader.seekg(uPolygonPosition + 0xC, reader.beg);
 		else reader.seekg(uPolygonPosition + 0x14, reader.beg);
 	}
+
+	//copyRectangleInVRM(levelSubframes[0].xCoordinateDestination, levelSubframes[0].yCoordinateDestination, levelSubframes[0].xSize, levelSubframes[0].ySize,
+	//	levelSubframes[0].xCoordinateSources[0], levelSubframes[0].yCoordinateSources[0], true);
 
 	for (unsigned int m = 0; m < materials.size(); m++)
 	{
 		if (materials[m].realMaterial)
 		{
-			materials[m].properlyExported = UVPointCorrectionAndExport(m, objectName, outputFolder, materials[m], polygons);
+			materials[m].properlyExported = UVPointCorrectionAndExport(m, isObject, objectName, outputFolder, materials[m], polygons, !isObject, levelSubframes);
 
-			for (unsigned int i = 0; i < materials[m].subframes.size(); i++)
+			for (unsigned int i = 0; i < materials[m].objectSubframes.size(); i++)
 			{
-				subframePointCorrectionAndExport(materials[m].textureID, objectName, outputFolder, materials[m].subframes[i]);
+				objectSubframePointCorrectionAndExport(m, materials[m].textureID, objectName, outputFolder, materials[m].objectSubframes[i]);
 			}
 		}
 	}

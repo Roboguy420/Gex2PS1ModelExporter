@@ -26,11 +26,11 @@ struct UV
 {
 	float u, v;
 };
-bool sortUCoord(const UV &a, const UV &b)
+static bool sortUCoord(const UV &a, const UV &b)
 {
 	return a.u < b.u;
 }
-bool sortVCoord(const UV &a, const UV &b)
+static bool sortVCoord(const UV &a, const UV &b)
 {
 	return a.v < b.v;
 }
@@ -42,7 +42,21 @@ struct PolygonStruct
 	UV uv1, uv2, uv3;
 };
 
-struct AnimationSubframe
+struct LevelAnimationSubframe
+{
+	unsigned short int xCoordinateDestination;
+	unsigned short int yCoordinateDestination;
+	unsigned short int xSize;
+	unsigned short int ySize;
+	std::vector<unsigned short int> xCoordinateSources;
+	std::vector<unsigned short int> yCoordinateSources;
+	//Ideally there would be a base material address, but animated textures for levels are done by translating parts of VRAM, ...
+	//...rather than modifying a specific material directly like with animated textures for objects. So unfortunately the user will have to manually guess and apply the animated texture...
+	//...to the corresponding base material, rather than the work being (partially) done for them.
+	bool subframeExportsThis;
+};
+
+struct ObjectAnimationSubframe
 {
 	unsigned short int clutValue;
 	unsigned short int texturePage;
@@ -59,5 +73,5 @@ struct Material
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	unsigned int textureID;
-	std::vector<AnimationSubframe> subframes;
+	std::vector<ObjectAnimationSubframe> objectSubframes;
 };

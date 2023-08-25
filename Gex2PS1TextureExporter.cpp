@@ -1,11 +1,13 @@
 #include <libpng/png.h>
 
 #include <Gex2PS1ModelExporter.h>
+#include <ModelStructs.h>
 
 #include <Windows.h>
 #include <filesystem>
 
 unsigned short int** textureData = new unsigned short int* [512];
+unsigned short int** textureDataVRAMMovement = new unsigned short int* [512];
 
 int initialiseVRM(std::string path)
 {
@@ -25,10 +27,46 @@ int initialiseVRM(std::string path)
 		}
 	}
 
+	for (int y = 0; y < 512; y++)
+	{
+		textureDataVRAMMovement[y] = new unsigned short int[512];
+	}
+
+	resetModifiedVRAM();
+
 	return 0;
 }
 
-int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int subframe)
+bool resetModifiedVRAM()
+{
+	for (unsigned int y = 0; y < 512; y++)
+	{
+		for (unsigned int x = 0; x < 512; x++)
+		{
+			textureDataVRAMMovement[y][x] = textureData[y][x];
+		}
+	}
+
+	return true;
+}
+
+int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short int yCoordinateDestination, unsigned short int xSize, unsigned short int ySize, unsigned short int xCoordinateSource, unsigned short int yCoordinateSource, bool useAlreadyModifiedVRAMAsBase)
+{
+	for (unsigned int y = 0; y < ySize; y++)
+	{
+		for (unsigned int x = 0; x < xSize; x++)
+		{
+			if (!useAlreadyModifiedVRAMAsBase)
+				resetModifiedVRAM();
+
+			textureDataVRAMMovement[yCoordinateDestination + y][xCoordinateDestination + x] = textureDataVRAMMovement[yCoordinateSource + y][xCoordinateSource + x];
+		}
+	}
+
+	return 0;
+}
+
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes)
 {
 	//Initialise texture page
 
@@ -45,52 +83,80 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		pixels[y] = new unsigned short int[256];
 	}
 
+	bool* subframeCheckAlreadyDone = new bool[levelSubframes.size()];
+
+	for (unsigned int i = 0; i < levelSubframes.size(); i++)
+	{
+		subframeCheckAlreadyDone[i] = false;
+	}
+
+	if (textureIndex == 45)
+	{
+		int a = 0;
+	}
+
 	for (int y = 0; y < 256; y++)
 	{
 		for (int x = 0; x < 256;)
 		{
+			int wrappedWidth;
 			if (((texturePage >> 7) & 0x3) == 0) // 4 bit
 			{
 				colourLimit = 16;
 				unsigned short int val = 0;
-				int wrappedWidth = (texturePageX + (x / 4)) % 512;
+				wrappedWidth = (texturePageX + (x / 4)) % 512;
 				if ((texturePageY + y) < 512)
-				{
-					val = textureData[texturePageY + y][wrappedWidth];
-				}
+					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
 				pixels[y][x++] = val & 0x000F;
 				pixels[y][x++] = (val & 0x00F0) >> 4;
 				pixels[y][x++] = (val & 0x0F00) >> 8;
-				pixels[y][x++] = (val & 0xF000) >> 12;
+				pixels[y][x] = (val & 0xF000) >> 12;
 			}
 			else if (((texturePage >> 7) & 0x3) == 1) // 8 bit
 			{
 				colourLimit = 256;
 				unsigned short int val = 0;
-				int wrappedWidth = (texturePageX + (x / 2)) % 512;
+				wrappedWidth = (texturePageX + (x / 2)) % 512;
 				if ((texturePageY + y) < 512)
-				{
-					val = textureData[texturePageY + y][wrappedWidth];
-				}
+					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
 				pixels[y][x++] = val & 0x00FF;
-				pixels[y][x++] = (val & 0xFF00) >> 8; 
+				pixels[y][x] = (val & 0xFF00) >> 8;
 			}
 			else if (((texturePage >> 7) & 0x3) == 2) // 16 bit
 			{
 				colourLimit = 65536;
 				unsigned short int val = 0;
-				int wrappedWidth = (texturePageX + x) % 512;
+				wrappedWidth = (texturePageX + x) % 512;
 				if ((texturePageY + y) < 512)
-				{
-					val = textureData[texturePageY + y][wrappedWidth];
-				}
+					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
-				pixels[y][x++] = val;
+				pixels[y][x] = val;
 			}
+
+			if (x >= left && x < right && y >= north && y < south)
+			{
+				for (unsigned int i = 0; i < levelSubframes.size(); i++)
+				{
+					if (!subframeCheckAlreadyDone[i] && wrappedWidth >= levelSubframes[i].xCoordinateDestination && wrappedWidth < (levelSubframes[i].xCoordinateDestination + levelSubframes[i].xSize)
+						&& (texturePageY + y) >= levelSubframes[i].yCoordinateDestination && (texturePageY + y) < (levelSubframes[i].yCoordinateDestination + levelSubframes[i].ySize))
+					{
+						levelSubframes[i].subframeExportsThis = true;
+						subframeCheckAlreadyDone[i] = true;
+					}
+				}
+			}
+			x++;
 		}
 	}
+
+	if (textureIndex == 45)
+	{
+		int a = 0;
+	}
+
+	free(subframeCheckAlreadyDone);
 
 	//Initialise CLUT
 
@@ -107,7 +173,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		int wrappedWidth = (colourTableX + x) % 512;
 		if (colourTableY < 512)
 		{
-			val = textureData[colourTableY][wrappedWidth];
+			val = textureDataVRAMMovement[colourTableY][wrappedWidth];
 		}
 
 		unsigned short int alpha = val >> 15;
