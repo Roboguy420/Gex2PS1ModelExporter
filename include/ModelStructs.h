@@ -50,9 +50,6 @@ struct LevelAnimationSubframe
 	unsigned short int ySize;
 	std::vector<unsigned short int> xCoordinateSources;
 	std::vector<unsigned short int> yCoordinateSources;
-	//Ideally there would be a base material address, but animated textures for levels are done by translating parts of VRAM, ...
-	//...rather than modifying a specific material directly like with animated textures for objects. So unfortunately the user will have to manually guess and apply the animated texture...
-	//...to the corresponding base material, rather than the work being (partially) done for them.
 	bool subframeExportsThis;
 };
 
