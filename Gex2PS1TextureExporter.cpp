@@ -1,7 +1,6 @@
-#include <libpng/png.h>
+#include "libpng/png.h"
 
-#include <Gex2PS1ModelExporter.h>
-#include <ModelStructs.h>
+#include "Gex2PS1TextureExporter.h"
 
 #include <Windows.h>
 #include <filesystem>

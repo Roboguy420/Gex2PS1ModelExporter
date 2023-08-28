@@ -26,11 +26,11 @@ struct UV
 {
 	float u, v;
 };
-static bool sortUCoord(const UV &a, const UV &b)
+bool sortUCoord(const UV &a, const UV &b)
 {
 	return a.u < b.u;
 }
-static bool sortVCoord(const UV &a, const UV &b)
+bool sortVCoord(const UV &a, const UV &b)
 {
 	return a.v < b.v;
 }
@@ -40,17 +40,6 @@ struct PolygonStruct
 	Vertex v1, v2, v3;
 	unsigned int materialID;
 	UV uv1, uv2, uv3;
-};
-
-struct LevelAnimationSubframe
-{
-	unsigned short int xCoordinateDestination;
-	unsigned short int yCoordinateDestination;
-	unsigned short int xSize;
-	unsigned short int ySize;
-	std::vector<unsigned short int> xCoordinateSources;
-	std::vector<unsigned short int> yCoordinateSources;
-	bool subframeExportsThis;
 };
 
 struct ObjectAnimationSubframe

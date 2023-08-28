@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "ModelStructs.h"
+#include "TextureStructs.h"
+#include "Gex2PS1SharedFunctions.h"
 #include <iostream>
 #include <stdio.h>
 #include <direct.h>
@@ -7,11 +10,22 @@
 #include <string>
 #include <format>
 
-int initialiseVRM(std::string path);
-int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short int yCoordinateDestination, unsigned short int xSize, unsigned short int ySize, unsigned short int xCoordinateSource, unsigned short int yCoordinateSource, bool useAlreadyModifiedVRAMAsBase);
-bool resetModifiedVRAM();
+int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile);
+int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile);
+void readVertices(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
+Vertex readVertex(ifstreamoffset& reader, unsigned int v);
+void readArmature(ifstreamoffset& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
+void applyArmature(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
+void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices);
+PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes);
+Material readMaterial(ifstreamoffset& reader, unsigned int p, std::vector<Material> materials);
+ObjectAnimationSubframe readObjectAnimationSubFrame(ifstreamoffset& reader, unsigned int baseMaterialAddress);
+LevelAnimationSubframe* readLevelAnimationSubFrames(ifstreamoffset& reader, unsigned int baseMaterialAddress);
+bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
+bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe);
+int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
 
-static int stringToInt(std::string inputString, int failValue)
+int stringToInt(std::string inputString, int failValue)
 {
 	for (int i = 0; i < inputString.length(); i++)
 	{
@@ -23,16 +37,7 @@ static int stringToInt(std::string inputString, int failValue)
 	return atoi(inputString.c_str());
 }
 
-inline char directorySeparator()
-{
-#ifdef _WIN32
-	return '\\';
-#else
-	return '/';
-#endif
-}
-
-static std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
+std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
 {
 	size_t parentDirEnd = fileName.find_last_of(directorySeparator());
 	std::string filePath;
@@ -53,7 +58,7 @@ static std::string getFileNameWithoutExtension(std::string fileName, bool includ
 	return fileName.substr(0, extensionStart);
 }
 
-static std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
+std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
 {
 	//Workaround for those pesky floating point rounding errors whenever you divide a number by power of 10
 	
@@ -181,56 +186,3 @@ unsigned int getMinOrMaxIndexOfThree(auto element1, auto element2, auto element3
 		}
 	}
 }
-
-class ifstreamoffset : public std::ifstream
-{
-	//Pretty much identical to ifstream for the most part
-	//However it includes an offset (named superOffset) that can be used to reposition the "start" of the stream
-	//E.g. If you have a filestream, but everything before 0x1000 is unneeded, you can make 0x1000 the offset
-	//This would allow you to make arbitrary movements from the beginning of the stream without needing to constantly reuse the offset
-
-	public:
-		using std::ifstream::ifstream;
-
-		unsigned int superOffset;
-
-		basic_istream& __CLR_OR_THIS_CALL seekg(off_type _Off, ios_base::seekdir _Way, bool offsetUsed = true)
-		{
-			unsigned int offset = 0;
-			if (offsetUsed && _Way == ios_base::beg) { offset = superOffset; }
-
-			ios_base::iostate _State = ios_base::goodbit;
-			ios_base::iostate _Oldstate = _Myios::rdstate();
-			_Myios::clear(_Oldstate & ~ios_base::eofbit);
-			const sentry _Ok(*this, true);
-
-			if (!this->fail())
-			{
-				_TRY_IO_BEGIN
-				if (static_cast<off_type>(_Myios::rdbuf()->pubseekoff(_Off + offset, _Way, ios_base::in)) == -1)
-				{
-					_State |= ios_base::failbit;
-				}
-				_CATCH_IO_END
-			}
-
-			_Myios::setstate(_State);
-			return *this;
-		}
-
-		pos_type __CLR_OR_THIS_CALL tellg(bool offsetUsed = true)
-		{
-			unsigned int offset = 0;
-			if (offsetUsed) { offset = superOffset; }
-
-			const sentry _Ok(*this, true);
-
-			if (!this->fail()) {
-				_TRY_IO_BEGIN
-					return (int)_Myios::rdbuf()->pubseekoff(0, ios_base::cur, ios_base::in) - offset;
-				_CATCH_IO_END
-			}
-
-			return pos_type(-1);
-		}
-};
