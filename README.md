@@ -55,7 +55,6 @@ This program requires:
 * [libpng](https://sourceforge.net/projects/libpng/files/) to export textures to PNG
 * [zlib](https://sourceforge.net/projects/libpng/files/zlib/) to compile libpng
 * [CMake](https://cmake.org) to build
-* [Clang](https://clang.llvm.org) to compile
 
 Install CMake if you haven't already and clone the TinyXML2 repository onto your computer.
 
@@ -63,18 +62,18 @@ If you're sticking with using Visual Studio as the CMake generator, go to the Vi
 
 If you're using an alternate method, modify the CMake files as needed.
 
-### TinyXML2
-First, clone the repository into your chosen location. Navigate to the folder _libraries_ and create a new folder there named _tinyxml2_. Go into that folder and create two more folders, one called _include_ and one called _lib_. Go to the _include_ folder and create a new folder named _tinyxml2_.
+### TinyXML2 (static library)
+First, clone the repository into your chosen location. Navigate to the folder _libraries_ and create a new folder there named _tinyxml2_. Go into that folder and create two more folders, one called _include_ and one called _lib_.
 
-Navigate to the TinyXML2 repository and copy the files _tinyxml2.cpp_ and _tinyxml2.h_. Navigate back to the model exporter repository and paste them into the _tinyxml2_ folder found in _include_ ([repository]/libraries/tinyxml2/include/tinyxml2).
+Navigate to the TinyXML2 repository and copy the files _tinyxml2.cpp_ and _tinyxml2.h_. Navigate back to the model exporter repository and paste them into the _include_ folder ([repository]/libraries/tinyxml2/include).
 
 Next, build the TinyXML2 lib file using CMake (there are plenty of tutorials online on how to use CMake if you are struggling). After you're done building, go to either the _Debug_ or _Release_ folder (depending on the one you built) and copy the file _tinyxml2.lib_.
 
-Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib). Rename it so either DEBUG or RELEASE is at the end of the filename, depending on whether you built debug or release (tinyxml2DEBUG.lib or tinyxml2RELEASE.lib).
+Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib). If it is a debug build, add 'd' to the end of the filename (tinyxml2d.lib).
 
 If you have followed these steps correctly, TinyXML2 should now be added as an external library.
 
-### libpng
+### libpng (static library)
 This one's a bit of a ballache and for me the visual studio solutions provided in the source code were riddled with errors, so I instead rebuilt the solutions using CMakeLists, which I'll briefly go over how to do here.
 
 Download libpng16 1.6.39 and unzip the folder to any location on your PC. Download zlib 1.2.11 and unzip the folder to any location on your PC.
@@ -91,15 +90,15 @@ Copy _zlibstatic.lib_ and _zlibstaticd.lib_. Navigate to the build directory and
 
 Choose either release or debug depending on which one you want to build for. Right click _png_ and click _Build_.
 
-Create a new folder called _libpng_ in the _libraries_ folder in the model exporter's source code. Create two more folders inside the new folder called _include_ and _lib_. Create another new folder inside _include_ called _libpng_.
+Create a new folder called _libpng_ in the _libraries_ folder in the model exporter's source code. Create two more folders inside the new folder called _include_ and _lib_.
 
 Copy _libpng16.dll_, _libpng16.lib_, _libpng16d.lib_, _zlibstatic.lib_, and _zlibstaticd.lib_ and paste them into the _lib_ folder.
 
-Copy and paste _zconf.h_ and _zlib.h_ into _include/libpng_. Also copy and paste _png.h_, _pngconf.h_, and _pnglibconf.h_ into there (these files can be found in the root of the libpng source code).
+Copy and paste _zconf.h_ and _zlib.h_ into _include_. Also copy and paste _png.h_, _pngconf.h_, and _pnglibconf.h_ into there (these files can be found in the root of the libpng source code).
 
 If you have followed these steps correctly, libpng should now be added as an external library.
 
-### Compile using Clang
+### Compile
 If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ and _Gex2PS1ModelNamesLister_ as the projects. Click build and the programs should be created.
 
 You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
