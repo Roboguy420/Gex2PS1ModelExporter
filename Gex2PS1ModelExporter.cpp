@@ -1,13 +1,13 @@
 ﻿#define NOMINMAX
 
-#include "tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 #include "Gex2PS1ModelExporter.h"
 #include "Gex2PS1TextureExporter.h"
-#include <Windows.h>
 #include <filesystem>
 #include <algorithm>
 #include <vector>
+#include <math.h>
 
 int main(int argc, char* argv[])
 {
@@ -18,16 +18,12 @@ int main(int argc, char* argv[])
 		//The output destination + selected model index are optional parameters
 	}
 	std::string inputFile = argv[1];
-	std::string outputFolder;
+	std::string outputFolder = std::filesystem::current_path().string();
 
 	//Selected export -1 = everything
 	//Selected export 0 = level geometry
 	//Selected export >0 = other object models
 	int selectedModelExport = -1;
-
-	char outputFolderBuffer[2048]; //You can modify this value if you're using some other OS that has an even larger directory length.
-	_getcwd(outputFolderBuffer, 2048);
-	outputFolder = outputFolderBuffer;
 
 	if (argc > 2 && std::filesystem::is_directory(argv[2]))
 	{
@@ -45,10 +41,10 @@ int main(int argc, char* argv[])
 		return 2;
 	}
 
-	ifstreamoffset reader(inputFile, std::ifstream::binary);
-	reader.exceptions(ifstreamoffset::eofbit);
+	std::ifstream tempReader(inputFile, std::ifstream::binary);
+	tempReader.exceptions(std::ifstream::eofbit);
 
-	if (!reader)
+	if (!tempReader)
 	{
 		return 3;
 	}
@@ -68,9 +64,22 @@ int main(int argc, char* argv[])
 	{
 		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(inputFile, true)));
 		unsigned int bitshift;
-		reader.read((char*)&bitshift, sizeof(bitshift));
+		tempReader.read((char*)&bitshift, sizeof(bitshift));
 		bitshift = ((bitshift >> 9) << 11) + 0x800;
-		reader.superOffset = bitshift;
+		tempReader.seekg(0, tempReader.end);
+		size_t filesize = tempReader.tellg();
+		tempReader.seekg(bitshift, tempReader.beg);
+	
+		std::ofstream tempWriter("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+
+		while (tempReader.tellg() < filesize)
+		{
+			unsigned char data;
+			tempReader.read((char*)&data, sizeof(data));
+			tempWriter << data;
+		}
+		tempWriter.close();
+		std::ifstream reader("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
 
 		unsigned int modelsAddressesStart;
 		reader.seekg(0x3C, reader.beg);
@@ -173,23 +182,26 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	catch (ifstreamoffset::failure e)
+	catch (std::ifstream::failure e)
 	{
 		//End of stream exception
+		std::remove("Gex2PS1ModelExporterTempfile.drm");
 		return 5;
 	}
 	if (!atLeastOneExportedSuccessfully)
 	{
 		//No models were successfully exported
+		std::remove("Gex2PS1ModelExporterTempfile.drm");
 		return 8;
 	}
+	std::remove("Gex2PS1ModelExporterTempfile.drm");
 	return returnCode;
 }
 
 
 
 
-int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile)
+int convertObjToDAE(std::ifstream& reader, std::string outputFolder, std::string objectName, std::string inputFile)
 {
 	unsigned short int vertexCount;
 	unsigned int vertexStartAddress;
@@ -227,7 +239,7 @@ int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::strin
 	return exportReturn;
 }
 
-int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile)
+int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::string inputFile)
 {
 	std::string objectName = getFileNameWithoutExtension(inputFile, false);
 	unsigned int BSPTreeStartAddress;
@@ -270,7 +282,7 @@ int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::str
 
 
 
-void readVertices(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
+void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
 
@@ -293,7 +305,7 @@ void readVertices(ifstreamoffset& reader, unsigned short int vertexCount, unsign
 	}
 }
 
-Vertex readVertex(ifstreamoffset& reader, unsigned int v)
+Vertex readVertex(std::ifstream& reader, unsigned int v)
 {
 	Vertex thisVertex;
 
@@ -322,7 +334,7 @@ Vertex readVertex(ifstreamoffset& reader, unsigned int v)
 
 
 
-void readArmature(ifstreamoffset &reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones)
+void readArmature(std::ifstream &reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones)
 {
 	if (boneStartAddress == 0 || boneCount == 0) { return; }
 
@@ -370,7 +382,7 @@ void readArmature(ifstreamoffset &reader, unsigned short int boneCount, unsigned
 	}
 }
 
-void applyArmature(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
+void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0 || boneStartAddress == 0 || boneCount == 0) { return; }
 
@@ -392,7 +404,7 @@ void applyArmature(ifstreamoffset& reader, unsigned short int vertexCount, unsig
 
 
 
-void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+void readPolygons(std::ifstream& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
 
@@ -471,7 +483,7 @@ void readPolygons(ifstreamoffset& reader, std::string objectName, std::string ou
 	}
 }
 
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
+PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
 {
 	PolygonStruct thisPolygon;
 
@@ -496,7 +508,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	{
 		reader.seekg(1, reader.cur);
 
-		byte polygonFlags;
+		unsigned char polygonFlags;
 		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
 		thisMaterial.visible = true;
 
@@ -507,8 +519,8 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 
 			reader.seekg(materialAddress, reader.beg);
 
-			byte u[3];
-			byte v[3];
+			unsigned char u[3];
+			unsigned char v[3];
 			reader.read((char*)&u[0], 1);
 			reader.read((char*)&v[0], 1);
 			reader.seekg(2, reader.cur);
@@ -536,7 +548,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 	}
 	else
 	{
-		byte polygonFlags;
+		unsigned char polygonFlags;
 		reader.seekg(0x1, reader.cur);
 		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
 		reader.seekg(0x8, reader.cur);
@@ -549,8 +561,8 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 		{
 			reader.seekg(materialAddress, reader.beg);
 
-			byte u[3];
-			byte v[3];
+			unsigned char u[3];
+			unsigned char v[3];
 			reader.read((char*)&u[0], 1);
 			reader.read((char*)&v[0], 1);
 			reader.seekg(2, reader.cur);
@@ -688,7 +700,7 @@ PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialSt
 
 
 
-Material readMaterial(ifstreamoffset& reader, unsigned int p, std::vector<Material> materials)
+Material readMaterial(std::ifstream& reader, unsigned int p, std::vector<Material> materials)
 {
 	Material thisMaterial;
 	thisMaterial.realMaterial = true;
@@ -702,12 +714,12 @@ Material readMaterial(ifstreamoffset& reader, unsigned int p, std::vector<Materi
 	return thisMaterial;
 }
 
-ObjectAnimationSubframe readObjectAnimationSubFrame(ifstreamoffset &reader, unsigned int baseMaterialAddress)
+ObjectAnimationSubframe readObjectAnimationSubFrame(std::ifstream &reader, unsigned int baseMaterialAddress)
 {
 	ObjectAnimationSubframe subframe;
 
-	byte u[3];
-	byte v[3];
+	unsigned char u[3];
+	unsigned char v[3];
 	reader.read((char*)&u[0], 1);
 	reader.read((char*)&v[0], 1);
 	reader.read((char*)&subframe.clutValue, sizeof(subframe.clutValue));
@@ -726,7 +738,7 @@ ObjectAnimationSubframe readObjectAnimationSubFrame(ifstreamoffset &reader, unsi
 	return subframe;
 }
 
-LevelAnimationSubframe* readLevelAnimationSubFrames(ifstreamoffset &reader, unsigned int baseMaterialAddress)
+LevelAnimationSubframe* readLevelAnimationSubFrames(std::ifstream &reader, unsigned int baseMaterialAddress)
 {
 	LevelAnimationSubframe* subframes = new LevelAnimationSubframe[2];
 
@@ -876,7 +888,7 @@ bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned in
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
 	std::vector<LevelAnimationSubframe> empty;
-	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, materialID, (textureID + 1), (subframe.subframeID + 1), empty);
+	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), materialID, (subframe.subframeID + 1), empty);
 	if (texPageReturnValue != 0)
 	{
 		return false;

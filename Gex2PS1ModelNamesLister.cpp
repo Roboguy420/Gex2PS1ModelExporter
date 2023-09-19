@@ -1,6 +1,7 @@
-#include <Gex2PS1ModelExporter.h>
+#include "Gex2PS1SharedFunctions.h"
 
 #include <filesystem>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -17,18 +18,31 @@ int main(int argc, char* argv[])
 		return 2;
 	}
 
-	ifstreamoffset reader(inputFile, std::ifstream::binary);
-	reader.exceptions(ifstreamoffset::eofbit);
+	std::ifstream tempReader(inputFile, std::ifstream::binary);
+	tempReader.exceptions(std::ifstream::eofbit);
 
-	if (!reader)
+	if (!tempReader)
 	{
 		return 3;
 	}
 
 	unsigned int bitshift;
-	reader.read((char*)&bitshift, sizeof(bitshift));
+	tempReader.read((char*)&bitshift, sizeof(bitshift));
 	bitshift = ((bitshift >> 9) << 11) + 0x800;
-	reader.superOffset = bitshift;
+	tempReader.seekg(0, tempReader.end);
+	size_t filesize = tempReader.tellg();
+	tempReader.seekg(bitshift, tempReader.beg);
+	
+	std::ofstream tempWriter("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+
+	while (tempReader.tellg() < filesize)
+	{
+		unsigned char data;
+		tempReader.read((char*)&data, sizeof(data));
+		tempWriter << data;
+	}
+	tempWriter.close();
+	std::ifstream reader("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
 
 	unsigned int modelsAddressesStart;
 	reader.seekg(0x3C, reader.beg);
@@ -66,6 +80,9 @@ int main(int argc, char* argv[])
 
 		reader.seekg(nextPos, reader.beg);
 	}
+
+	reader.close();
+	std::remove("Gex2PS1ModelExporterTempfile.drm");
 
 	return 0;
 }

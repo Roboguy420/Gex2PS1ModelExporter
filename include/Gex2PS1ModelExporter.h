@@ -5,22 +5,21 @@
 #include "Gex2PS1SharedFunctions.h"
 #include <iostream>
 #include <stdio.h>
-#include <direct.h>
 #include <fstream>
 #include <string>
 #include <format>
 
-int convertObjToDAE(ifstreamoffset& reader, std::string outputFolder, std::string objectName, std::string inputFile);
-int convertLevelToDAE(ifstreamoffset& reader, std::string outputFolder, std::string inputFile);
-void readVertices(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
-Vertex readVertex(ifstreamoffset& reader, unsigned int v);
-void readArmature(ifstreamoffset& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
-void applyArmature(ifstreamoffset& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
-void readPolygons(ifstreamoffset& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices);
-PolygonStruct readPolygon(ifstreamoffset& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes);
-Material readMaterial(ifstreamoffset& reader, unsigned int p, std::vector<Material> materials);
-ObjectAnimationSubframe readObjectAnimationSubFrame(ifstreamoffset& reader, unsigned int baseMaterialAddress);
-LevelAnimationSubframe* readLevelAnimationSubFrames(ifstreamoffset& reader, unsigned int baseMaterialAddress);
+int convertObjToDAE(std::ifstream& reader, std::string outputFolder, std::string objectName, std::string inputFile);
+int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::string inputFile);
+void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
+Vertex readVertex(std::ifstream& reader, unsigned int v);
+void readArmature(std::ifstream& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
+void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
+void readPolygons(std::ifstream& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices);
+PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes);
+Material readMaterial(std::ifstream& reader, unsigned int p, std::vector<Material> materials);
+ObjectAnimationSubframe readObjectAnimationSubFrame(std::ifstream& reader, unsigned int baseMaterialAddress);
+LevelAnimationSubframe* readLevelAnimationSubFrames(std::ifstream& reader, unsigned int baseMaterialAddress);
 bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
 bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe);
 int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);

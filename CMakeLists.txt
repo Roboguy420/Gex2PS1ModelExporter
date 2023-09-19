@@ -2,8 +2,7 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.8)
-
-set(CMAKE_GENERATOR_TOOLSET "ClangCL")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_definitions($<$<CONFIG:Release>:_ITERATOR_DEBUG_LEVEL=0>)
 
@@ -15,54 +14,56 @@ endif()
 
 project ("Gex2PS1ModelExporter")
 
-# Add source to this project's executable.
-file(GLOB HEADER_FILES_EXPORTER include/*.h)
-add_executable (Gex2PS1ModelExporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET Gex2PS1ModelExporter PROPERTY CXX_STANDARD 20)
-endif()
+# Model exporter
+file(GLOB HEADER_FILES_EXPORTER include/*.h)
+add_executable (gex2ps1modelexporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
+
+set_property(TARGET gex2ps1modelexporter PROPERTY CXX_STANDARD 20)
 
 # TODO: Add tests and install targets if needed.
 
-target_include_directories(Gex2PS1ModelExporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-target_link_libraries(Gex2PS1ModelExporter PUBLIC 
-	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2d.lib"
-	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/lib/tinyxml2.lib")
-
-target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/tinyxml2/include")
-
-target_link_libraries(Gex2PS1ModelExporter PUBLIC
-	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16d.lib"
-	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16.lib")
-
-target_include_directories(Gex2PS1ModelExporter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/include")
+target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 
+# Linking libraries, choose shared or static when running cmake
 
-set(HEADER_FILES_NAMES_LISTER include/Gex2PS1ModelExporter.h)
-add_executable (Gex2PS1ModelNamesLister "Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
+if (USE_SHARED_LIBRARIES)
+  set(tinyxml2_PATHS
+    /usr
+  )
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET Gex2PS1ModelNamesLister PROPERTY CXX_STANDARD 20)
+  find_package(PNG REQUIRED)
+  find_package(tinyxml2 REQUIRED)
+
+  find_library(tinyxml2_LIBRARIES NAMES tinyxml2 PATH_SUFFIXES lib PATHS ${tinyxml2_PATHS})
+  find_path(tinyxml2_INCLUDE_DIRS tinyxml2.h PATH_SUFFIXES include PATHS ${tinyxml2_PATHS})
+
+  target_include_directories(gex2ps1modelexporter PRIVATE "${PNG_INCLUDE_DIRS}")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${tinyxml2_INCLUDE_DIRS}")
+
+  target_link_libraries(gex2ps1modelexporter "${PNG_LIBRARIES}")
+  target_link_libraries(gex2ps1modelexporter "${tinyxml2_LIBRARIES}")
+
+else()
+
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\include")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\include")
+
+  target_link_libraries(gex2ps1modelexporter
+  debug "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\lib\\libpng16d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\lib\\libpng16.lib")
+  target_link_libraries(gex2ps1modelexporter
+  debug "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\lib\\tinyxml2d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\lib\\tinyxml2.lib")
+
 endif()
 
-target_include_directories(Gex2PS1ModelNamesLister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+# Model names lister
+set(HEADER_FILES_NAMES_LISTER include/Gex2PS1SharedFunctions.h)
+add_executable (gex2ps1modelnameslister "Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
 
+set_property(TARGET gex2ps1modelnameslister PROPERTY CXX_STANDARD 20)
 
-file(GLOB HEADER_FILES_TEXTURE_DEBUG include/*.h)
-add_executable(TextureDebug ".debugTextureDebug.cpp" ${HEADER_FILES_TEXTURE_DEBUG})
-
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET TextureDebug PROPERTY CXX_STANDARD 20)
-endif()
-
-target_include_directories(TextureDebug PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-target_link_libraries(TextureDebug PUBLIC
-	debug "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16d.lib"
-	optimized "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/lib/libpng16.lib")
-
-target_include_directories(TextureDebug PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/libraries/libpng/include")
+target_include_directories(gex2ps1modelnameslister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")

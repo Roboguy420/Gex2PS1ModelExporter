@@ -1,9 +1,9 @@
-#include "libpng/png.h"
+#include "png.h"
 
 #include "Gex2PS1TextureExporter.h"
 
-#include <Windows.h>
 #include <filesystem>
+#include <format>
 
 unsigned short int** textureData = new unsigned short int* [512];
 unsigned short int** textureDataVRAMMovement = new unsigned short int* [512];
