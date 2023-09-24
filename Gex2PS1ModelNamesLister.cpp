@@ -1,3 +1,7 @@
+/*  Copyright (C) 2023  Roboguy420
+
+    Full copyright notice in Gex2PS1ModelExporter.cpp  */
+
 #include "Gex2PS1SharedFunctions.h"
 
 #include <filesystem>
