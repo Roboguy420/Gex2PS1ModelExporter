@@ -67,3 +67,6 @@ add_executable (gex2ps1modelnameslister "Gex2PS1ModelNamesLister.cpp" ${HEADER_F
 set_property(TARGET gex2ps1modelnameslister PROPERTY CXX_STANDARD 20)
 
 target_include_directories(gex2ps1modelnameslister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+install(TARGETS gex2ps1modelexporter DESTINATION bin)
+install(TARGETS gex2ps1modelnameslister DESTINATION bin)
