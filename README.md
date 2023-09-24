@@ -5,6 +5,7 @@ This is a simple command line program written in C++ that exports Gex 2 PS1 mode
 Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1ModelExporter/releases). Download the latest release for your OS to get all the latest features.
 
 Windows 64-bit release is Gex2PS1ModelExporter-windows-64bit.zip
+
 Arch 64-bit release is gex2ps1modelexporter-6-1-x86_64.pkg.tar.zst
 
 ## Usage
