@@ -1,5 +1,5 @@
 #pragma once
-//
+
 #include "TextureStructs.h"
 #include "Gex2PS1SharedFunctions.h"
 #include <string>
