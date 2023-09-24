@@ -17,7 +17,7 @@ project ("Gex2PS1ModelExporter")
 
 # Model exporter
 file(GLOB HEADER_FILES_EXPORTER include/*.h)
-add_executable (gex2ps1modelexporter "Gex2PS1ModelExporter.cpp" "Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
+add_executable (gex2ps1modelexporter "src/Gex2PS1ModelExporter.cpp" "src/Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
 
 set_property(TARGET gex2ps1modelexporter PROPERTY CXX_STANDARD 20)
 
@@ -47,22 +47,22 @@ if (USE_SHARED_LIBRARIES)
 
 else()
 
-  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\include")
-  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\include")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\include")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\include")
 
   target_link_libraries(gex2ps1modelexporter
-  debug "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\lib\\libpng16d.lib"
-  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\libpng\\lib\\libpng16.lib")
+  debug "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\lib\\libpng16d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\lib\\libpng16.lib")
   target_link_libraries(gex2ps1modelexporter
-  debug "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\lib\\tinyxml2d.lib"
-  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\libraries\\tinyxml2\\lib\\tinyxml2.lib")
+  debug "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\lib\\tinyxml2d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\lib\\tinyxml2.lib")
 
 endif()
 
 
 # Model names lister
 set(HEADER_FILES_NAMES_LISTER include/Gex2PS1SharedFunctions.h)
-add_executable (gex2ps1modelnameslister "Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
+add_executable (gex2ps1modelnameslister "src/Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
 
 set_property(TARGET gex2ps1modelnameslister PROPERTY CXX_STANDARD 20)
 

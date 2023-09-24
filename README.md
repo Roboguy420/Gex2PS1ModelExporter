@@ -67,13 +67,13 @@ If you're sticking with using Visual Studio as the CMake generator, go to the Vi
 If you're using an alternate method, modify the CMake files as needed.
 
 ### TinyXML2 (static library)
-First, clone the repository into your chosen location. Navigate to the folder _libraries_ and create a new folder there named _tinyxml2_. Go into that folder and create two more folders, one called _include_ and one called _lib_.
+First, clone the repository into your chosen location. Navigate to the folder _lib_ and create a new folder there named _tinyxml2_. Go into that folder and create two more folders, one called _include_ and one called _lib_.
 
-Navigate to the TinyXML2 repository and copy the files _tinyxml2.cpp_ and _tinyxml2.h_. Navigate back to the model exporter repository and paste them into the _include_ folder ([repository]/libraries/tinyxml2/include).
+Navigate to the TinyXML2 repository and copy the files _tinyxml2.cpp_ and _tinyxml2.h_. Navigate back to the model exporter repository and paste them into the _include_ folder ([repository]/lib/tinyxml2/include).
 
 Next, build the TinyXML2 lib file using CMake (there are plenty of tutorials online on how to use CMake if you are struggling). After you're done building, go to either the _Debug_ or _Release_ folder (depending on the one you built) and copy the file _tinyxml2.lib_.
 
-Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/libraries/tinyxml2/lib). If it is a debug build, add 'd' to the end of the filename (tinyxml2d.lib).
+Navigate back to the model exporter repository and paste the file into the _lib_ folder ([repository]/lib/tinyxml2/lib). If it is a debug build, add 'd' to the end of the filename (tinyxml2d.lib).
 
 If you have followed these steps correctly, TinyXML2 should now be added as an external library.
 
@@ -94,7 +94,7 @@ Copy _zlibstatic.lib_ and _zlibstaticd.lib_. Navigate to the build directory and
 
 Choose either release or debug depending on which one you want to build for. Right click _png_ and click _Build_.
 
-Create a new folder called _libpng_ in the _libraries_ folder in the model exporter's source code. Create two more folders inside the new folder called _include_ and _lib_.
+Create a new folder called _libpng_ in the _lib_ folder in the model exporter's source code. Create two more folders inside the new folder called _include_ and _lib_.
 
 Copy _libpng16.dll_, _libpng16.lib_, _libpng16d.lib_, _zlibstatic.lib_, and _zlibstaticd.lib_ and paste them into the _lib_ folder.
 
@@ -108,7 +108,7 @@ If you are using Visual Studio as the CMake generator, build the Visual Studio s
 You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
 
 ## Compatibility
-Currently I have only tested the program on Windows 64-bit, and have only built a Windows release. However I am aiming to make the program cross-compatible with Linux.
+The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows and x86-64 Arch Linux. They have been tested and found to be working on Windows 10 64-bit and Artix Linux respectively.
 
 ## Credits
 * Crystal Dynamics for their amazing game
