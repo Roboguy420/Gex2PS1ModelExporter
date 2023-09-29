@@ -6,7 +6,7 @@ Binaries can be found in the [releases](https://github.com/Roboguy420/Gex2PS1Mod
 
 Windows 64-bit release is Gex2PS1ModelExporter-windows-64bit.zip
 
-Arch 64-bit release is gex2ps1modelexporter-6-1-x86_64.pkg.tar.zst
+Arch 64-bit release is gex2ps1modelexporter-[ver]-[rel]-x86_64.pkg.tar.zst
 
 ## Usage
 ### Model Exporter

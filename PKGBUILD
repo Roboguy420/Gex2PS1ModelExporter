@@ -1,7 +1,7 @@
 # Maintainer: Roboguy420 <wahaller@proton.me>
 pkgname='gex2ps1modelexporter'
-pkgver=5.r18.g4907af0
-pkgrel=1
+pkgver=6
+pkgrel=2
 epoch=
 pkgdesc="Command line program for exporting Gex 2 PS1 models"
 arch=('x86_64')
@@ -28,5 +28,5 @@ build() {
 
 package() {
 	cd "$srcdir/$pkgname/out/build/x64-release"
-	sudo cmake --install .
+	DESTDIR="$pkgdir" cmake --install .
 }
