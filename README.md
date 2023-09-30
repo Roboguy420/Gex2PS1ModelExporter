@@ -8,6 +8,8 @@ Windows 64-bit release is Gex2PS1ModelExporter-windows-64bit.zip
 
 Arch 64-bit release is gex2ps1modelexporter-[ver]-[rel]-x86_64.pkg.tar.zst
 
+RPM 64-bit release is gex2ps1modelexporter-[ver]-[rel].fc[fedoraver].x86_64.rpm
+
 ## Usage
 ### Model Exporter
 There are 3 parameters in the program, 1 is needed and the other 2 are optional.
@@ -108,7 +110,7 @@ If you are using Visual Studio as the CMake generator, build the Visual Studio s
 You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
 
 ## Compatibility
-The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows and x86-64 Arch Linux. They have been tested and found to be working on Windows 10 64-bit and Artix Linux respectively.
+The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, and x86-64 Red Hat-based Linux. They have been tested and found to be working on Windows 10 64-bit, Artix Linux, and Fedora Linux x86-64 respectively.
 
 ## Credits
 * Crystal Dynamics for their amazing game

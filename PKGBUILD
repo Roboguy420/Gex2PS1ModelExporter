@@ -1,7 +1,7 @@
 # Maintainer: Roboguy420 <wahaller@proton.me>
 pkgname='gex2ps1modelexporter'
 pkgver=6
-pkgrel=2
+pkgrel=3
 epoch=
 pkgdesc="Command line program for exporting Gex 2 PS1 models"
 arch=('x86_64')
@@ -21,7 +21,7 @@ build() {
 	cd "$srcdir/$pkgname"
 	mkdir "out"
 	cd "out"
-	cmake .. -G "Unix Makefiles" --preset x64-release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DUSE_SHARED_LIBRARIES=1
+	cmake .. -G "Unix Makefiles" --preset x64-release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DUSE_SHARED_LIBRARIES=1
 	cd "build/x64-release"
 	cmake --build .
 }
