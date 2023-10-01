@@ -8,7 +8,7 @@ Windows 64-bit release is Gex2PS1ModelExporter-windows-64bit.zip
 
 Arch 64-bit release is gex2ps1modelexporter-[ver]-[rel]-x86_64.pkg.tar.zst
 
-RPM 64-bit release is gex2ps1modelexporter-[ver]-[rel].fc[fedoraver].x86_64.rpm
+RPM 64-bit release is gex2ps1modelexporter-[ver]-[rel].x86_64.rpm
 
 ## Usage
 ### Model Exporter

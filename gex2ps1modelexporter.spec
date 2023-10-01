@@ -1,6 +1,6 @@
 Name:           gex2ps1modelexporter
 Version:        6
-Release:        1%{?dist}
+Release:        2
 Summary:        Command line program for exporting Gex 2 PS1 models
 
 License:        GPL 
@@ -33,9 +33,7 @@ cmake --build .
 
 %install
 cd "out/build/x64-release"
-echo test246810
 cmake --install .
-echo test12345678
 
 
 %files
