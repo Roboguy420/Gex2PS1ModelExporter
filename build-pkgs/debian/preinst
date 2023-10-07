@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Removes old versions of gex2ps1modelexporter
+
+echo "Looking for old versions of gex2ps1modelexporter..."
+
+if [ -f /usr/bin/gex2ps1modelexporter ]; then
+    sudo rm -f /usr/bin/gex2ps1modelexporter
+    echo "Removed old gex2ps1modelexporter"
+fi
+
+if [ -f /usr/bin/gex2ps1modelnameslister ]; then
+    sudo rm -f /usr/bin/gex2ps1modelnameslister
+    echo "Removed old gex2ps1modelnameslister"
+fi

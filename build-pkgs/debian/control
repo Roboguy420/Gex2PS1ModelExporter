@@ -1,0 +1,12 @@
+Source: gex2ps1modelexporter
+Priority: optional
+Maintainer: Roboguy420 <wahaller@proton.me>
+Build-Depends: libpng-dev, libtinyxml2-dev, cmake, debhelper (>= 7)
+Standards-Version: 4.5.1
+Homepage: https://github.com/Roboguy420/Gex2PS1ModelExporter
+Rules-Requires-Root: no
+
+Package: gex2ps1modelexporter
+Architecture: amd64
+Depends: libpng16-16, libtinyxml2-9, glibc
+Description: Command line program for exporting Gex 2 PS1 models
