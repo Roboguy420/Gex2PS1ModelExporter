@@ -1,3 +1,9 @@
+gex2ps1modelexporter (6-2) unstable; urgency=low
+
+   * Fixed incorrect dependency name in debian/control
+ 
+ -- Roboguy420 <wahaller@proton.me>  Sat, 07 Oct 2023 23:49:00 +0100
+
 gex2ps1modelexporter (6-1) unstable; urgency=low
 
   * Initial release.
