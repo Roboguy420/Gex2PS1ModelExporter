@@ -560,6 +560,10 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 		{
 			//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
 			realMaterial = false;
+
+			reader.read((char*)&thisMaterial.redVal, 1);
+			reader.read((char*)&thisMaterial.greenVal, 1);
+			reader.read((char*)&thisMaterial.blueVal, 1);
 		}
 	}
 	else
@@ -686,7 +690,8 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 		bool newMaterial = true;
 		for (int m = 0; m < materials.size(); m++)
 		{
-			if (!materials[m].realMaterial)
+			if (!materials[m].realMaterial && thisMaterial.redVal == materials[m].redVal
+			&& thisMaterial.greenVal == materials[m].greenVal && thisMaterial.blueVal == materials[m].blueVal)
 			{
 				newMaterial = false;
 				thisPolygon.materialID = m;
@@ -695,11 +700,10 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 		}
 		if (newMaterial)
 		{
-			Material fakeMaterial;
-			fakeMaterial.realMaterial = false;
-			fakeMaterial.visible = true;
-			fakeMaterial.properlyExported = true;
-			materials.push_back(fakeMaterial);
+			thisMaterial.realMaterial = false;
+			thisMaterial.visible = true;
+			thisMaterial.properlyExported = true;
+			materials.push_back(thisMaterial);
 			thisPolygon.materialID = materials.size() - 1;
 		}
 		thisPolygon.uv1.u = 0.0f;
@@ -1006,40 +1010,60 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 
 		//Effects
 
-		if (materials[m].realMaterial && materials[m].properlyExported)
+		if (materials[m].properlyExported)
 		{
 			tinyxml2::XMLElement* effect = outputDAE.NewElement("effect");
-			effect->SetAttribute("id", std::format("{}-{}-fx", objectName, materials[m].textureID).c_str());
-			effect->SetAttribute("name", std::format("{}-{}", objectName, materials[m].textureID).c_str());
+			effect->SetAttribute("id", std::format("{}-{}-fx", objectName, m).c_str());
+			effect->SetAttribute("name", std::format("{}-{}", objectName, m).c_str());
 			tinyxml2::XMLElement* profile_COMMON = outputDAE.NewElement("profile_COMMON");
 
-			tinyxml2::XMLElement* newparamSurface = outputDAE.NewElement("newparam");
-			newparamSurface->SetAttribute("sid", std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
-			tinyxml2::XMLElement* surface = outputDAE.NewElement("surface");
-			surface->SetAttribute("type", "2D");
-			tinyxml2::XMLElement* init_fromDiffuseSurface = outputDAE.NewElement("init_from");
-			init_fromDiffuseSurface->SetText(std::format("{}-{}-diffuse-image", objectName, materials[m].textureID).c_str());
-			surface->LinkEndChild(init_fromDiffuseSurface);
-			newparamSurface->LinkEndChild(surface);
-			profile_COMMON->LinkEndChild(newparamSurface);
+			if (materials[m].realMaterial)
+			{
+				tinyxml2::XMLElement* newparamSurface = outputDAE.NewElement("newparam");
+				newparamSurface->SetAttribute("sid", std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
+				tinyxml2::XMLElement* surface = outputDAE.NewElement("surface");
+				surface->SetAttribute("type", "2D");
+				tinyxml2::XMLElement* init_fromDiffuseSurface = outputDAE.NewElement("init_from");
+				init_fromDiffuseSurface->SetText(std::format("{}-{}-diffuse-image", objectName, materials[m].textureID).c_str());
+				surface->LinkEndChild(init_fromDiffuseSurface);
+				newparamSurface->LinkEndChild(surface);
+				profile_COMMON->LinkEndChild(newparamSurface);
 
-			tinyxml2::XMLElement* newparamSampler = outputDAE.NewElement("newparam");
-			newparamSampler->SetAttribute("sid", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
-			tinyxml2::XMLElement* sampler2D = outputDAE.NewElement("sampler2D");
-			tinyxml2::XMLElement* samplerSource = outputDAE.NewElement("source");
-			samplerSource->SetText(std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
-			sampler2D->LinkEndChild(samplerSource);
-			newparamSampler->LinkEndChild(sampler2D);
-			profile_COMMON->LinkEndChild(newparamSampler);
+				tinyxml2::XMLElement* newparamSampler = outputDAE.NewElement("newparam");
+				newparamSampler->SetAttribute("sid", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
+				tinyxml2::XMLElement* sampler2D = outputDAE.NewElement("sampler2D");
+				tinyxml2::XMLElement* samplerSource = outputDAE.NewElement("source");
+				samplerSource->SetText(std::format("{}-{}-diffuse-surface", objectName, materials[m].textureID).c_str());
+				sampler2D->LinkEndChild(samplerSource);
+				newparamSampler->LinkEndChild(sampler2D);
+				profile_COMMON->LinkEndChild(newparamSampler);
+			}
 
 			tinyxml2::XMLElement* technique = outputDAE.NewElement("technique");
 			technique->SetAttribute("sid", "standard");
 			tinyxml2::XMLElement* phong = outputDAE.NewElement("phong");
 			tinyxml2::XMLElement* diffuse = outputDAE.NewElement("diffuse");
-			tinyxml2::XMLElement* texture = outputDAE.NewElement("texture");
-			texture->SetAttribute("texture", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
-			texture->SetAttribute("texcoord", "CHANNEL0");
-			diffuse->LinkEndChild(texture);
+
+			if (materials[m].realMaterial)
+			{
+				tinyxml2::XMLElement* texture = outputDAE.NewElement("texture");
+				texture->SetAttribute("texture", std::format("{}-{}-diffuse-sampler", objectName, materials[m].textureID).c_str());
+				texture->SetAttribute("texcoord", "CHANNEL0");
+				diffuse->LinkEndChild(texture);
+			}
+			else
+			{
+				std::string coloursString = "";
+				coloursString += std::to_string(materials[m].redVal / 255.0) + " ";
+				coloursString += std::to_string(materials[m].greenVal / 255.0) + " ";
+				coloursString += std::to_string(materials[m].blueVal / 255.0) + " ";
+				coloursString += "1";
+
+				tinyxml2::XMLElement* colour = outputDAE.NewElement("color");
+				colour->SetAttribute("sid", "diffuse");
+				colour->SetText(coloursString.c_str());
+				diffuse->LinkEndChild(colour);
+			}
 			phong->LinkEndChild(diffuse);
 			tinyxml2::XMLElement* specular = outputDAE.NewElement("specular");
 			tinyxml2::XMLElement* specularColour = outputDAE.NewElement("color");
@@ -1065,10 +1089,10 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		tinyxml2::XMLElement* material = outputDAE.NewElement("material");
 		material->SetAttribute("id", std::format("{}-mat{}", objectName, m).c_str());
 		material->SetAttribute("name", std::format("{}-mat{}", objectName, m).c_str());
-		if (materials[m].realMaterial && materials[m].properlyExported)
+		if (materials[m].properlyExported)
 		{
 			tinyxml2::XMLElement* instance_effectMaterial = outputDAE.NewElement("instance_effect");
-			instance_effectMaterial->SetAttribute("url", std::format("#{}-{}-fx", objectName, materials[m].textureID).c_str());
+			instance_effectMaterial->SetAttribute("url", std::format("#{}-{}-fx", objectName, m).c_str());
 			material->LinkEndChild(instance_effectMaterial);
 		}
 		library_materials->LinkEndChild(material);
@@ -1178,13 +1202,20 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		coloursSource->SetAttribute("id", std::format("meshId{}-color", m).c_str());
 		coloursSource->SetAttribute("name", std::format("meshId{}-color", m).c_str());
 		tinyxml2::XMLElement* coloursFloat_array = outputDAE.NewElement("float_array");
-		coloursFloat_array->SetAttribute("id", std::format("meshId{}-color-array", m).c_str());
+		coloursFloat_array->SetAttribute("id", std::format("meshId{}-colors-array", m).c_str());
 		coloursFloat_array->SetAttribute("count", meshPolygons.size() * 9);
 		std::string coloursString = " ";
-		for (int c = 0; c < meshPolygons.size() * 9; c++)
+		for (int c = 0; c < meshPolygons.size() * 3; c++)
 		{
 			//Temporary thing as I'm not sure how colours work in the models yet
-			coloursString += "0 ";
+			if (!materials[m].realMaterial)
+			{
+				coloursString += std::to_string(materials[m].redVal / 255.0) + " ";
+				coloursString += std::to_string(materials[m].greenVal / 255.0) + " ";
+				coloursString += std::to_string(materials[m].blueVal / 255.0) + " ";
+			}
+			else
+				coloursString += "0 0 0 ";
 		}
 		coloursFloat_array->SetText(coloursString.c_str());
 		tinyxml2::XMLElement* coloursTechnique_common = outputDAE.NewElement("technique_common");

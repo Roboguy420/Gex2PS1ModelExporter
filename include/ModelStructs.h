@@ -72,6 +72,9 @@ struct Material
 	bool realMaterial;
 	bool visible; //Only used for level geometry
 	bool properlyExported;
+	unsigned char redVal;
+	unsigned char blueVal;
+	unsigned char greenVal;
 	unsigned short int clutValue;
 	unsigned short int texturePage;
 	unsigned int textureID;
