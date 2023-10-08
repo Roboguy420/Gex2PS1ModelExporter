@@ -139,7 +139,7 @@ You may also want to include a `-DCMAKE_INSTALL_PREFIX=[install prefix]` flag, i
 
 Change directory to where it was built:
 ```
->cd out/build/[preset]
+> cd out/build/[preset]
 ```
 
 ...and compile the programs:
