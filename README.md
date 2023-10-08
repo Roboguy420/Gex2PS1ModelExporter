@@ -10,6 +10,8 @@ Arch 64-bit release is gex2ps1modelexporter-[ver]-[rel]-x86_64.pkg.tar.zst
 
 RPM 64-bit release is gex2ps1modelexporter-[ver]-[rel].x86_64.rpm
 
+Debian AMD64 release is gex2ps1modelexporter_[ver]-[rel]_amd64.deb
+
 ## Usage
 ### Model Exporter
 There are 3 parameters in the program, 1 is needed and the other 2 are optional.
@@ -22,7 +24,7 @@ The 3rd parameter is the **model index**. This is the index of whichever model y
 
 Usage on the command line is as follows:
 ```
-> Gex2PS1ModelExporter.exe [input file] [output folder] [model index]
+> gex2ps1modelexporter [input file] [output folder] [model index]
 ```
 
 ### Model Names Lister
@@ -30,7 +32,7 @@ There is only 1 parameter in the program, which is the **input file**. This is t
 
 Usage on the command line is as follows:
 ```
-> Gex2PS1ModelNamesLister.exe [input file]
+> gex2ps1modelnameslister [input file]
 ```
 
 ## Getting the Model Files
@@ -55,7 +57,7 @@ The return values are as follows:
 * **7:** At least 1 successful export, others had failures
 * **8:** No successful exports, all attempts failed
 
-## Compilation & Building
+## Compilation & Building - Windows
 This program requires:
 * [TinyXML2](https://github.com/leethomason/tinyxml2) to make the DAE files
 * [libpng](https://sourceforge.net/projects/libpng/files/) to export textures to PNG
@@ -109,8 +111,56 @@ If you are using Visual Studio as the CMake generator, build the Visual Studio s
 
 You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
 
+## Compilation & Building - Linux
+This process assumes you have a Linux distribution installed and are familiar with its package manager. If you are uncomfortable with your system's package manager and instead use something like Snap or Flatpak, I cannot help you here.
+
+Generally you can just follow the logic of the package buildfiles provided in the build-pkgs directory of the source code, but if you are still stuck trying to locally build the program, this section can help.
+
+### Install the Needed Packages
+This program requires CMake to build. Install the cmake package on your distribution with its package manager.
+
+To retrieve the source code, you will need git. Install the git package.
+
+You will also need to install libpng and tinyxml2. These may be named differently depending on your distribution. You may also need to install the developer packages for the build process, depending on your distribution.
+
+Lastly, you will need a compiler and a standard C library. The ones I chose and are confirmed to work are the GNU Compiler Collection (gcc and g++) and the GNU C Library (glibc). Install these.
+
+### Build
+Clone the repository into a folder of your choice (e.g. /home/[user]/src).
+
+Navigate to the root of the repository folder and run the following command:
+```
+> cmake -G "Unix Makefiles" --preset [preset] -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DUSE_SHARED_LIBRARIES=1
+```
+
+The available presets are _x64-release_, _x64-debug_, _x86-release_, and _x86-debug_. The C and C++ compilers were chosen before, if you're going with the ones I chose then these are gcc and g++ respectively.
+
+You may also want to include a `-DCMAKE_INSTALL_PREFIX=[install prefix]` flag, if you wish to install the program in a location other than /usr/local. (By default CMake installs it into /usr/local, this is the conventional location on Linux for programs that are not managed by any package manager)
+
+Change directory to where it was built:
+```
+>cd out/build/[preset]
+```
+
+...and compile the programs:
+```
+> cmake --build .
+```
+
+If all has went well, both gex2ps1modelexporter and gex2ps1modelnameslister will be built in the folder with no errors.
+
+### Install
+If you wish to install the program, navigate to where the makefile is (this should be out/build/[preset] relative to the source code).
+
+Run the following command:
+```
+> cmake --install .
+```
+
+If all has went well, both gex2ps1modelexporter and gex2ps1modelnameslister will be installed in the chosen installation folder with no errors.
+
 ## Compatibility
-The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, and x86-64 Red Hat-based Linux. They have been tested and found to be working on Windows 10 64-bit, Artix Linux, and Fedora Linux x86-64 respectively.
+The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, x86-64 Red Hat-based Linux, and AMD64 Debian GNU/Linux. They have been tested and found to be working on Windows 10 64-bit, Artix Linux, Fedora Linux x86-64, and Debian Sid (unstable Trixie as of writing) AMD64 respectively.
 
 ## Credits
 * Crystal Dynamics for their amazing game
