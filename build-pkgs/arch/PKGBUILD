@@ -21,7 +21,7 @@ build() {
 	cd "$srcdir/$pkgname"
 	mkdir "out"
 	cd "out"
-	cmake .. --preset x64-release-linux
+	cmake .. --preset x64-release-linux -DCMAKE_INSTALL_PREFIX=/usr
 	cd "build/x64-release-linux"
 	cmake --build .
 }

@@ -98,19 +98,12 @@
       "hidden": true
     },
 
-    {
-      "name": "usrInstallPrefix",
-      "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/usr"
-      }
-    },
-
     { "name": "x64-debug-windows", "displayName": "x64 Debug (Windows)", "inherits": [ "default", "x64", "Debug", "VisualStudio17", "ClangCL", "StaticLibs" ] },
     { "name": "x64-release-windows", "displayName": "x64 Release (Windows)", "inherits": [ "default", "x64", "Release", "VisualStudio17", "ClangCL", "StaticLibs" ] },
     { "name": "x86-debug-windows", "displayName": "x86 Debug (Windows)", "inherits": [ "default", "x86", "Debug", "VisualStudio17", "ClangCL", "StaticLibs" ] },
     { "name": "x86-release-windows", "displayName": "x86 Release (Windows)", "inherits": [ "default", "x86", "Release", "VisualStudio17", "ClangCL", "StaticLibs" ] },
 
-    { "name": "x64-debug-linux", "displayName": "x64 Debug (Linux)", "inherits": [ "default", "x64", "Debug", "Makefiles", "GNU", "SharedLibs", "usrInstallPrefix" ]},
-    { "name": "x64-release-linux", "displayName": "x64 Release (Linux)", "inherits": [ "default", "x64", "Release", "Makefiles", "GNU", "SharedLibs", "usrInstallPrefix" ]}
+    { "name": "x64-debug-linux", "displayName": "x64 Debug (Linux)", "inherits": [ "default", "x64", "Debug", "Makefiles", "GNU", "SharedLibs" ]},
+    { "name": "x64-release-linux", "displayName": "x64 Release (Linux)", "inherits": [ "default", "x64", "Release", "Makefiles", "GNU", "SharedLibs" ]}
   ]
 }
