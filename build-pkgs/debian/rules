@@ -2,7 +2,7 @@
 export DEB_BUILD_MAINT_OPTIONS = hardening=-relro
 
 %:
-	dh $@ --buildsystem=cmake --builddirectory=out/build/x64-release
+	dh $@ --buildsystem=cmake --builddirectory=out/build/x64-release-linux
 
 override_dh_auto_configure:
-	dh_auto_configure -- -G "Unix Makefiles" --preset x64-release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DUSE_SHARED_LIBRARIES=1
+	dh_auto_configure -- --preset x64-release-linux

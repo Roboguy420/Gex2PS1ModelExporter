@@ -26,13 +26,13 @@ Command line program for exporting Gex 2 PS1 models
 %build
 mkdir "out"
 cd "out"
-cmake .. -G "Unix Makefiles" --preset x64-release -DCMAKE_INSTALL_PREFIX=%{buildroot}/usr -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DUSE_SHARED_LIBRARIES=1
-cd "build/x64-release"
+cmake .. --preset x64-release-linux -DCMAKE_INSTALL_PREFIX=%{buildroot}/usr
+cd "build/x64-release-linux"
 cmake --build .
 
 
 %install
-cd "out/build/x64-release"
+cd "out/build/x64-release-linux"
 cmake --install .
 
 

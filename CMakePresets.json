@@ -6,45 +6,111 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}"
     },
+
     {
-      "name": "x64-debug",
-      "displayName": "x64 Debug",
-      "inherits": "default",
+      "name": "x64",
       "architecture": {
         "value": "x64",
         "strategy": "external"
       },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
+      "hidden": true
     },
     {
-      "name": "x64-release",
-      "displayName": "x64 Release",
-      "inherits": "x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "x86-debug",
-      "displayName": "x86 Debug",
-      "inherits": "default",
+      "name": "x86",
       "architecture": {
         "value": "x86",
         "strategy": "external"
       },
+      "hidden": true
+    },
+
+    {
+      "name": "Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
-      }
+      },
+      "hidden": true
     },
     {
-      "name": "x86-release",
-      "displayName": "x86 Release",
-      "inherits": "x86-debug",
+      "name": "Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
+      },
+      "hidden": true
+    },
+
+    {
+      "name": "VisualStudio17",
+      "generator": "Visual Studio 17",
+      "hidden": true
+    },
+    {
+      "name": "Makefiles",
+      "generator": "Unix Makefiles",
+      "hidden": true
+    },
+
+    {
+      "name": "MSVC",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
+      "name": "ClangCL",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "toolset": {
+        "value": "ClangCL",
+        "strategy": "set"
+      },
+      "hidden": true
+    },
+    {
+      "name": "GNU",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "hidden": true
+    },
+
+    {
+      "name": "StaticLibs",
+      "cacheVariables": {
+        "USE_SHARED_LIBRARIES": "0"
+      },
+      "hidden": true
+    },
+    {
+      "name": "SharedLibs",
+      "cacheVariables": {
+        "USE_SHARED_LIBRARIES": "1"
+      },
+      "hidden": true
+    },
+
+    {
+      "name": "usrInstallPrefix",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/usr"
       }
-    }
+    },
+
+    { "name": "x64-debug-windows", "displayName": "x64 Debug (Windows)", "inherits": [ "default", "x64", "Debug", "VisualStudio17", "ClangCL", "StaticLibs" ] },
+    { "name": "x64-release-windows", "displayName": "x64 Release (Windows)", "inherits": [ "default", "x64", "Release", "VisualStudio17", "ClangCL", "StaticLibs" ] },
+    { "name": "x86-debug-windows", "displayName": "x86 Debug (Windows)", "inherits": [ "default", "x86", "Debug", "VisualStudio17", "ClangCL", "StaticLibs" ] },
+    { "name": "x86-release-windows", "displayName": "x86 Release (Windows)", "inherits": [ "default", "x86", "Release", "VisualStudio17", "ClangCL", "StaticLibs" ] },
+
+    { "name": "x64-debug-linux", "displayName": "x64 Debug (Linux)", "inherits": [ "default", "x64", "Debug", "Makefiles", "GNU", "SharedLibs", "usrInstallPrefix" ]},
+    { "name": "x64-release-linux", "displayName": "x64 Release (Linux)", "inherits": [ "default", "x64", "Release", "Makefiles", "GNU", "SharedLibs", "usrInstallPrefix" ]}
   ]
 }

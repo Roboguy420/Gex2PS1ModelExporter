@@ -21,12 +21,12 @@ build() {
 	cd "$srcdir/$pkgname"
 	mkdir "out"
 	cd "out"
-	cmake .. -G "Unix Makefiles" --preset x64-release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DUSE_SHARED_LIBRARIES=1
-	cd "build/x64-release"
+	cmake .. --preset x64-release-linux
+	cd "build/x64-release-linux"
 	cmake --build .
 }
 
 package() {
-	cd "$srcdir/$pkgname/out/build/x64-release"
+	cd "$srcdir/$pkgname/out/build/x64-release-linux"
 	DESTDIR="$pkgdir" cmake --install .
 }
