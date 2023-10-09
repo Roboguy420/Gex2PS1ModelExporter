@@ -39,6 +39,7 @@ LevelAnimationSubframe* readLevelAnimationSubFrames(std::ifstream& reader, unsig
 bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
 bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe);
 int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
+float rgbToLinearRgb(unsigned char colour);
 
 int stringToInt(std::string inputString, int failValue)
 {

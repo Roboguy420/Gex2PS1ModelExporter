@@ -1054,9 +1054,9 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 			else
 			{
 				std::string coloursString = "";
-				coloursString += std::to_string(materials[m].redVal / 255.0) + " ";
-				coloursString += std::to_string(materials[m].greenVal / 255.0) + " ";
-				coloursString += std::to_string(materials[m].blueVal / 255.0) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].redVal) / 1.25f) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].greenVal) / 1.25f) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].blueVal) / 1.25f) + " ";
 				coloursString += "1";
 
 				tinyxml2::XMLElement* colour = outputDAE.NewElement("color");
@@ -1210,9 +1210,9 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 			//Temporary thing as I'm not sure how colours work in the models yet
 			if (!materials[m].realMaterial)
 			{
-				coloursString += std::to_string(materials[m].redVal / 255.0) + " ";
-				coloursString += std::to_string(materials[m].greenVal / 255.0) + " ";
-				coloursString += std::to_string(materials[m].blueVal / 255.0) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].redVal) / 1.25f) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].greenVal) / 1.25f) + " ";
+				coloursString += std::to_string(rgbToLinearRgb(materials[m].blueVal) / 1.25f) + " ";
 			}
 			else
 				coloursString += "0 0 0 ";
@@ -1344,4 +1344,13 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 
 	//Could not export
 	return 2;
+}
+
+
+float rgbToLinearRgb(unsigned char colour)
+{
+	if (colour <= 10)
+		return (float)(colour / 255.0f / 12.92f);
+	else
+		return (float)(std::pow(((colour / 255.0f) + 0.055f) / 1.055f, 2.4));
 }
