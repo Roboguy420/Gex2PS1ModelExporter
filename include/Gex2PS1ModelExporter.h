@@ -45,10 +45,10 @@ int stringToInt(std::string inputString, int failValue)
 {
 	for (int i = 0; i < inputString.length(); i++)
 	{
+		if (i == 0 && inputString[i] == '-')
+			continue;
 		if (!isdigit(inputString[i]))
-		{
 			return failValue;
-		}
 	}
 	return atoi(inputString.c_str());
 }

@@ -51,11 +51,12 @@ The return values are as follows:
 * **1:** Insufficient arguments
 * **2:** Input file not found
 * **3:** Failed to read input file
-* **4:** Output folder not found/failed to write to
-* **5:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
-* **6:** At least 1 texture failed to export
-* **7:** At least 1 successful export, others had failures
-* **8:** No successful exports, all attempts failed
+* **4:** Output folder in 2nd argument does not exist
+* **5:** 3rd argument is not a number -1 or higher
+* **6:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
+* **7:** At least 1 texture failed to export
+* **8:** At least 1 successful export, others had failures
+* **9:** No successful exports, all attempts failed
 
 ## Compilation & Building - Windows
 This program requires:

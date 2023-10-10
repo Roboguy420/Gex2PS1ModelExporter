@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2)
 	{
+		std::cerr << "Error 1: Need at least the input file to work" << std::endl;
 		return 1;
 		//Needs at least the input file to work
 		//The output destination + selected model index are optional parameters
@@ -36,24 +37,10 @@ int main(int argc, char* argv[])
 	std::string inputFile = argv[1];
 	std::string outputFolder = std::filesystem::current_path().string();
 
-	//Selected export -1 = everything
-	//Selected export 0 = level geometry
-	//Selected export >0 = other object models
-	int selectedModelExport = -1;
-
-	if (argc > 2 && std::filesystem::is_directory(argv[2]))
-	{
-		outputFolder = argv[2];
-		//If the directory in argument 2 does not exist, it ignores it and uses the current working directory
-	}
-	if (argc > 3)
-	{
-		selectedModelExport = stringToInt(argv[3], -1);
-	}
-
 	if (!std::filesystem::exists(inputFile))
 	{
 		//Input file doesn't exist
+		std::cerr << "Error 2: Input file does not exist" << std::endl;
 		return 2;
 	}
 
@@ -62,18 +49,39 @@ int main(int argc, char* argv[])
 
 	if (!tempReader)
 	{
+		std::cerr << "Error 3: Failed to read input file" << std::endl;
 		return 3;
 	}
 
-	if (!std::filesystem::exists(outputFolder))
+	//Selected export -1 = everything
+	//Selected export 0 = level geometry
+	//Selected export >0 = other object models
+	int selectedModelExport = -1;
+
+	if (argc > 2)
+		outputFolder = argv[2];
+
+	if (!std::filesystem::is_directory(outputFolder))
 	{
 		//Failed to access output folder
+		std::cerr << "Error 4: Output directory does not exist" << std::endl;
 		return 4;
 	}
 
 	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile, false);
 
+	if (argc > 3)
+	{
+		if ((selectedModelExport = stringToInt(argv[3], -2)) < -1)
+		{
+			std::cerr << "Error 5: Selected model index is invalid" << std::endl;
+			return 5;
+		}
+	}
+
 	int returnCode = 0;
+	bool modelFailedToExport = false;
+	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
 
 	try
@@ -96,6 +104,8 @@ int main(int argc, char* argv[])
 		}
 		tempWriter.close();
 		std::ifstream reader("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+
+		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
 
 		unsigned int modelsAddressesStart;
 		reader.seekg(0x3C, reader.beg);
@@ -138,6 +148,11 @@ int main(int argc, char* argv[])
 				reader.seekg(2, reader.cur);
 				reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
 
+				std::string plural = "";
+				if (objectCount > 1)
+					plural = "s";
+				std::cout << std::format("Found model {} at index {} with {} sub-object{}", objName, objIndex, objectCount, plural) << std::endl;
+
 				for (int i = 0; i < objectCount; i++)
 				{
 					reader.seekg(objectStartAddress + (i * 4), reader.beg);
@@ -150,22 +165,26 @@ int main(int argc, char* argv[])
 						objectNameAndIndex = objName + std::to_string(i + 1);
 					}
 
+					std::cout << std::format("	Reading {}...", objectNameAndIndex) << std::endl;
+
 					reader.seekg(objectModelData, reader.beg);
 					int objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, inputFile);
-					if (returnCode != 6 && objectReturnCode == 1)
+					if (!textureFailedToExport && !modelFailedToExport && objectReturnCode == 1)
 					{
 						//At least 1 texture failed to export
-						returnCode = 6;
+						textureFailedToExport = true;
 					}
 
-					if (returnCode != 7 && objectReturnCode == 2)
+					if (objectReturnCode == 2)
 					{
 						//Model failed to export
-						returnCode = 7;
+						std::cerr << std::format("	Export Error: Model {} failed to export", objectNameAndIndex) << std::endl;
+						modelFailedToExport = true;
 					}
 					else
 					{
 						atLeastOneExportedSuccessfully = true;
+						std::cout << std::format("	Successfully exported {}", objectNameAndIndex) << std::endl;
 					}
 				}
 				if (objIndex == selectedModelExport) { break; }
@@ -175,43 +194,57 @@ int main(int argc, char* argv[])
 		}
 		if (selectedModelExport < 1)
 		{
+			std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(inputFile, false)) << std::endl;
 			reader.seekg(0, reader.beg);
 			unsigned int levelData;
 			reader.read((char*)&levelData, sizeof(levelData));
 			reader.seekg(levelData, reader.beg);
 
 			int levelReturnCode = convertLevelToDAE(reader, outputFolder, inputFile);
-			if (returnCode != 6 && levelReturnCode == 1)
+			if (!textureFailedToExport && !modelFailedToExport && levelReturnCode == 1)
 			{
 				//At least 1 texture failed to export
-				returnCode = 6;
+				textureFailedToExport = true;
 			}
 
-			if (returnCode != 7 && levelReturnCode == 2)
+			if (levelReturnCode == 2)
 			{
 				//Model failed to export
-				returnCode = 7;
+				std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+				modelFailedToExport = true;
 			}
 			else
 			{
 				atLeastOneExportedSuccessfully = true;
+				std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(inputFile, false)) << std::endl;
 			}
 		}
+		std::remove("Gex2PS1ModelExporterTempfile.drm");
 	}
 	catch (std::ifstream::failure e)
 	{
 		//End of stream exception
-		std::remove("Gex2PS1ModelExporterTempfile.drm");
-		return 5;
+		std::cerr << "Error 6: End of stream exception" << std::endl;
+		return 6;
 	}
 	if (!atLeastOneExportedSuccessfully)
 	{
 		//No models were successfully exported
-		std::remove("Gex2PS1ModelExporterTempfile.drm");
+		std::cerr << "Error 9: No models were exported successfully" << std::endl;
+		return 9;
+	}
+	if (modelFailedToExport)
+	{
+		std::cerr << "Error 8: At least one model failed to export" << std::endl;
 		return 8;
 	}
-	std::remove("Gex2PS1ModelExporterTempfile.drm");
-	return returnCode;
+	if (textureFailedToExport)
+	{
+		std::cerr << "Error 7: At least one texture failed to export" << std::endl;
+		return 7;
+	}
+	std::cout << "Exit Code 0: Successful export with no errors" << std::endl;
+	return 0;
 }
 
 
