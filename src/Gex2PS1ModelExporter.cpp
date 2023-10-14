@@ -79,7 +79,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	int returnCode = 0;
 	bool modelFailedToExport = false;
 	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
@@ -463,46 +462,9 @@ void readPolygons(std::ifstream& reader, std::string objectName, std::string out
 	if (textureAnimationsStartAddress != 0)
 	{
 		if (isObject)
-		{
-			reader.seekg(textureAnimationsStartAddress, reader.beg);
-			unsigned int textureAnimationsCount;
-			reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
-			for (int i = 0; i < textureAnimationsCount; i++)
-			{
-				unsigned int uTextureAnimationsPosition = reader.tellg();
-				unsigned int materialAddress;
-				unsigned int subframesCount;
-				reader.read((char*)&materialAddress, sizeof(materialAddress));
-				reader.read((char*)&subframesCount, sizeof(subframesCount));
-				reader.seekg(materialAddress + 0x10, reader.beg);
-				for (int m = 0; m < subframesCount; m++)
-				{
-					unsigned int uSubframePosition = reader.tellg();
-					objectSubframes.push_back(readObjectAnimationSubFrame(reader, materialAddress));
-					objectSubframes[objectSubframes.size() - 1].subframeID = m;
-					reader.seekg(uSubframePosition + 0x10, reader.beg);
-				}
-				reader.seekg(uTextureAnimationsPosition + 0xC, reader.beg);
-			}
-		}
+			objectSubframes = readObjectAnimationSubFrames(reader, textureAnimationsStartAddress);
 		else
-		{
-			reader.seekg(textureAnimationsStartAddress, reader.beg);
-			unsigned int textureAnimationsCount;
-			reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
-			int a = 0;
-			for (unsigned int i = 0; i < textureAnimationsCount; i++)
-			{
-				unsigned int uTextureAnimationsPosition = reader.tellg();
-				unsigned int materialAddress;
-				reader.read((char*)&materialAddress, sizeof(materialAddress));
-				reader.seekg(materialAddress, reader.beg);
-				LevelAnimationSubframe* subframesPointer = readLevelAnimationSubFrames(reader, materialAddress);
-				levelSubframes.push_back(subframesPointer[0]);
-				levelSubframes.push_back(subframesPointer[1]);
-				reader.seekg(uTextureAnimationsPosition + 4, reader.beg);
-			}
-		}
+			levelSubframes = readLevelAnimationSubFrames(reader, textureAnimationsStartAddress);
 	}
 
 	reader.seekg(polygonStartAddress, reader.beg);
@@ -532,6 +494,127 @@ void readPolygons(std::ifstream& reader, std::string objectName, std::string out
 	}
 }
 
+std::vector<ObjectAnimationSubframe> readObjectAnimationSubFrames(std::ifstream& reader, unsigned int textureAnimationsStartAddress)
+{
+	std::vector<ObjectAnimationSubframe> objectSubframes;
+
+	reader.seekg(textureAnimationsStartAddress, reader.beg);
+	unsigned int textureAnimationsCount;
+	reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
+	for (int i = 0; i < textureAnimationsCount; i++)
+	{
+		unsigned int uTextureAnimationsPosition = reader.tellg();
+		unsigned int materialAddress;
+		unsigned int subframesCount;
+		reader.read((char*)&materialAddress, sizeof(materialAddress));
+		reader.read((char*)&subframesCount, sizeof(subframesCount));
+		reader.seekg(materialAddress + 0x10, reader.beg);
+		for (int m = 0; m < subframesCount; m++)
+		{
+			unsigned int uSubframePosition = reader.tellg();
+			objectSubframes.push_back(readObjectAnimationSubFrame(reader, materialAddress));
+			objectSubframes[objectSubframes.size() - 1].subframeID = m;
+			reader.seekg(uSubframePosition + 0x10, reader.beg);
+		}
+		reader.seekg(uTextureAnimationsPosition + 0xC, reader.beg);
+	}
+
+	return objectSubframes;
+}
+
+ObjectAnimationSubframe readObjectAnimationSubFrame(std::ifstream &reader, unsigned int baseMaterialAddress)
+{
+	ObjectAnimationSubframe subframe;
+
+	unsigned char u[3];
+	unsigned char v[3];
+	reader.read((char*)&u[0], 1);
+	reader.read((char*)&v[0], 1);
+	reader.read((char*)&subframe.clutValue, sizeof(subframe.clutValue));
+	reader.read((char*)&u[1], 1);
+	reader.read((char*)&v[1], 1);
+	reader.read((char*)&subframe.texturePage, sizeof(subframe.texturePage));
+	reader.read((char*)&u[2], 1);
+	reader.read((char*)&v[2], 1);
+
+	subframe.UVs.push_back({ u[0] / 255.0f, (255 - v[0]) / 255.0f });
+	subframe.UVs.push_back({ u[1] / 255.0f, (255 - v[1]) / 255.0f });
+	subframe.UVs.push_back({ u[2] / 255.0f, (255 - v[2]) / 255.0f });
+
+	subframe.baseMaterialAddress = baseMaterialAddress;
+
+	return subframe;
+}
+
+std::vector<LevelAnimationSubframe> readLevelAnimationSubFrames(std::ifstream& reader, unsigned int textureAnimationsStartAddress)
+{
+	std::vector<LevelAnimationSubframe> levelSubframes;
+
+	reader.seekg(textureAnimationsStartAddress, reader.beg);
+	unsigned int textureAnimationsCount;
+	reader.read((char*)&textureAnimationsCount, sizeof(textureAnimationsCount));
+	for (unsigned int i = 0; i < textureAnimationsCount; i++)
+	{
+		unsigned int uTextureAnimationsPosition = reader.tellg();
+		unsigned int materialAddress;
+		reader.read((char*)&materialAddress, sizeof(materialAddress));
+		reader.seekg(materialAddress, reader.beg);
+		LevelAnimationSubframe* subframesPointer = readLevelAnimationSubFrame(reader, materialAddress);
+		levelSubframes.push_back(subframesPointer[0]);
+		levelSubframes.push_back(subframesPointer[1]);
+		reader.seekg(uTextureAnimationsPosition + 4, reader.beg);
+	}
+
+	return levelSubframes;
+}
+
+LevelAnimationSubframe* readLevelAnimationSubFrame(std::ifstream &reader, unsigned int baseMaterialAddress)
+{
+	LevelAnimationSubframe* subframes = new LevelAnimationSubframe[2];
+
+	reader.read((char*)&(subframes[0].xCoordinateDestination), sizeof(subframes[0].xCoordinateDestination));
+	reader.read((char*)&(subframes[0].yCoordinateDestination), sizeof(subframes[0].yCoordinateDestination));
+	reader.read((char*)&(subframes[0].xSize), sizeof(subframes[0].xSize));
+	reader.read((char*)&(subframes[0].ySize), sizeof(subframes[0].ySize));
+
+	reader.read((char*)&(subframes[1].xCoordinateDestination), sizeof(subframes[1].xCoordinateDestination));
+	reader.read((char*)&(subframes[1].yCoordinateDestination), sizeof(subframes[1].yCoordinateDestination));
+	reader.read((char*)&(subframes[1].xSize), sizeof(subframes[1].xSize));
+	reader.read((char*)&(subframes[1].ySize), sizeof(subframes[1].ySize));
+
+	subframes[0].xCoordinateDestination -= 0x200;
+	subframes[1].xCoordinateDestination -= 0x200;
+
+	reader.seekg(8, reader.cur);
+
+	unsigned int numberOfFrames;
+	reader.read((char*)&numberOfFrames, sizeof(numberOfFrames));
+	reader.seekg(4, reader.cur);
+
+	for (unsigned int frame = 0; frame < numberOfFrames; frame++)
+	{
+		unsigned short int xCoordinateSource1, yCoordinateSource1, xCoordinateSource2, yCoordinateSource2;
+
+		reader.read((char*)&xCoordinateSource1, sizeof(xCoordinateSource1));
+		reader.read((char*)&yCoordinateSource1, sizeof(yCoordinateSource1));
+		reader.read((char*)&xCoordinateSource2, sizeof(xCoordinateSource2));
+		reader.read((char*)&yCoordinateSource2, sizeof(yCoordinateSource2));
+
+		xCoordinateSource1 -= 0x200;
+		xCoordinateSource2 -= 0x200;
+
+		subframes[0].xCoordinateSources.push_back(xCoordinateSource1);
+		subframes[0].yCoordinateSources.push_back(yCoordinateSource1);
+		subframes[1].xCoordinateSources.push_back(xCoordinateSource2);
+		subframes[1].yCoordinateSources.push_back(yCoordinateSource2);
+	}
+
+	subframes[0].subframeExportsThis = false;
+	subframes[1].subframeExportsThis = false;
+
+	return subframes;
+}
+
 PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
 {
 	PolygonStruct thisPolygon;
@@ -554,92 +637,10 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 	unsigned int materialAddress;
 
 	if (isObject)
-	{
-		reader.seekg(1, reader.cur);
-
-		unsigned char polygonFlags;
-		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
-		thisMaterial.visible = true;
-
-		if ((polygonFlags & 0x02) == 0x02)
-		{
-			realMaterial = true;
-			reader.read((char*)&materialAddress, sizeof(materialAddress));
-
-			reader.seekg(materialAddress, reader.beg);
-
-			unsigned char u[3];
-			unsigned char v[3];
-			reader.read((char*)&u[0], 1);
-			reader.read((char*)&v[0], 1);
-			reader.seekg(2, reader.cur);
-			reader.read((char*)&u[1], 1);
-			reader.read((char*)&v[1], 1);
-			reader.seekg(2, reader.cur);
-			reader.read((char*)&u[2], 1);
-			reader.read((char*)&v[2], 1);
-
-			thisPolygon.uv1.u = u[0] / 255.0f;
-			thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
-			thisPolygon.uv2.u = u[1] / 255.0f;
-			thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
-			thisPolygon.uv3.u = u[2] / 255.0f;
-			thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
-
-			reader.seekg(materialAddress, reader.beg);
-			thisMaterial = readMaterial(reader, p, materials);
-		}
-		else
-		{
-			//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
-			realMaterial = false;
-
-			reader.read((char*)&thisMaterial.redVal, 1);
-			reader.read((char*)&thisMaterial.greenVal, 1);
-			reader.read((char*)&thisMaterial.blueVal, 1);
-		}
-	}
+		readObjectPolygon(reader, thisPolygon, thisMaterial, realMaterial, materialAddress);
 	else
-	{
-		unsigned char polygonFlags;
-		reader.seekg(0x1, reader.cur);
-		reader.read((char*)&polygonFlags, sizeof(polygonFlags));
-		reader.seekg(0x8, reader.cur);
+		readLevelPolygon(reader, thisPolygon, thisMaterial, realMaterial, materialAddress);
 
-		reader.read((char*)&materialAddress, sizeof(materialAddress));
-
-		//0x02 = Animated texture flag
-		//0x80 = Invisible texture flag
-		if (materialAddress != 0xFFFF && (polygonFlags & 0x80) != 0x80)
-		{
-			reader.seekg(materialAddress, reader.beg);
-
-			unsigned char u[3];
-			unsigned char v[3];
-			reader.read((char*)&u[0], 1);
-			reader.read((char*)&v[0], 1);
-			reader.seekg(2, reader.cur);
-			reader.read((char*)&u[1], 1);
-			reader.read((char*)&v[1], 1);
-			reader.seekg(2, reader.cur);
-			reader.read((char*)&u[2], 1);
-			reader.read((char*)&v[2], 1);
-
-			thisPolygon.uv1.u = u[0] / 255.0f;
-			thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
-			thisPolygon.uv2.u = u[1] / 255.0f;
-			thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
-			thisPolygon.uv3.u = u[2] / 255.0f;
-			thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
-
-			reader.seekg(materialAddress, reader.beg);
-			thisMaterial = readMaterial(reader, p, materials);
-		}
-		else
-		{
-			realMaterial = false;
-		}
-	}
 
 	if (realMaterial)
 	{
@@ -750,10 +751,97 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 	return thisPolygon;
 }
 
+void readObjectPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Material& thisMaterial, bool& realMaterial, unsigned int& materialAddress)
+{
+	reader.seekg(1, reader.cur);
+
+	unsigned char polygonFlags;
+	reader.read((char*)&polygonFlags, sizeof(polygonFlags));
+	thisMaterial.visible = true;
+
+	if ((polygonFlags & 0x02) == 0x02)
+	{
+		realMaterial = true;
+		reader.read((char*)&materialAddress, sizeof(materialAddress));
+
+		reader.seekg(materialAddress, reader.beg);
+
+		unsigned char u[3];
+		unsigned char v[3];
+		reader.read((char*)&u[0], 1);
+		reader.read((char*)&v[0], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[1], 1);
+		reader.read((char*)&v[1], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[2], 1);
+		reader.read((char*)&v[2], 1);
+
+		thisPolygon.uv1.u = u[0] / 255.0f;
+		thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
+		thisPolygon.uv2.u = u[1] / 255.0f;
+		thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
+		thisPolygon.uv3.u = u[2] / 255.0f;
+		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
+
+		reader.seekg(materialAddress, reader.beg);
+		thisMaterial = readMaterial(reader);
+	}
+	else
+	{
+		//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
+		realMaterial = false;
+
+		reader.read((char*)&thisMaterial.redVal, 1);
+		reader.read((char*)&thisMaterial.greenVal, 1);
+		reader.read((char*)&thisMaterial.blueVal, 1);
+	}
+}
+
+void readLevelPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Material& thisMaterial, bool& realMaterial, unsigned int& materialAddress)
+{
+	unsigned char polygonFlags;
+	reader.seekg(0x1, reader.cur);
+	reader.read((char*)&polygonFlags, sizeof(polygonFlags));
+	reader.seekg(0x8, reader.cur);
+
+	reader.read((char*)&materialAddress, sizeof(materialAddress));
+
+	//0x02 = Animated texture flag
+	//0x80 = Invisible texture flag
+	if (materialAddress != 0xFFFF && (polygonFlags & 0x80) != 0x80)
+	{
+		reader.seekg(materialAddress, reader.beg);
+
+		unsigned char u[3];
+		unsigned char v[3];
+		reader.read((char*)&u[0], 1);
+		reader.read((char*)&v[0], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[1], 1);
+		reader.read((char*)&v[1], 1);
+		reader.seekg(2, reader.cur);
+		reader.read((char*)&u[2], 1);
+		reader.read((char*)&v[2], 1);
+
+		thisPolygon.uv1.u = u[0] / 255.0f;
+		thisPolygon.uv1.v = (255 - v[0]) / 255.0f;
+		thisPolygon.uv2.u = u[1] / 255.0f;
+		thisPolygon.uv2.v = (255 - v[1]) / 255.0f;
+		thisPolygon.uv3.u = u[2] / 255.0f;
+		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
+
+		reader.seekg(materialAddress, reader.beg);
+		thisMaterial = readMaterial(reader);
+	}
+	else
+		realMaterial = false;
+}
 
 
 
-Material readMaterial(std::ifstream& reader, unsigned int p, std::vector<Material> materials)
+
+Material readMaterial(std::ifstream& reader)
 {
 	Material thisMaterial;
 	thisMaterial.realMaterial = true;
@@ -765,77 +853,6 @@ Material readMaterial(std::ifstream& reader, unsigned int p, std::vector<Materia
 	reader.seekg(2, reader.cur);
 
 	return thisMaterial;
-}
-
-ObjectAnimationSubframe readObjectAnimationSubFrame(std::ifstream &reader, unsigned int baseMaterialAddress)
-{
-	ObjectAnimationSubframe subframe;
-
-	unsigned char u[3];
-	unsigned char v[3];
-	reader.read((char*)&u[0], 1);
-	reader.read((char*)&v[0], 1);
-	reader.read((char*)&subframe.clutValue, sizeof(subframe.clutValue));
-	reader.read((char*)&u[1], 1);
-	reader.read((char*)&v[1], 1);
-	reader.read((char*)&subframe.texturePage, sizeof(subframe.texturePage));
-	reader.read((char*)&u[2], 1);
-	reader.read((char*)&v[2], 1);
-
-	subframe.UVs.push_back({ u[0] / 255.0f, (255 - v[0]) / 255.0f });
-	subframe.UVs.push_back({ u[1] / 255.0f, (255 - v[1]) / 255.0f });
-	subframe.UVs.push_back({ u[2] / 255.0f, (255 - v[2]) / 255.0f });
-
-	subframe.baseMaterialAddress = baseMaterialAddress;
-
-	return subframe;
-}
-
-LevelAnimationSubframe* readLevelAnimationSubFrames(std::ifstream &reader, unsigned int baseMaterialAddress)
-{
-	LevelAnimationSubframe* subframes = new LevelAnimationSubframe[2];
-
-	reader.read((char*)&(subframes[0].xCoordinateDestination), sizeof(subframes[0].xCoordinateDestination));
-	reader.read((char*)&(subframes[0].yCoordinateDestination), sizeof(subframes[0].yCoordinateDestination));
-	reader.read((char*)&(subframes[0].xSize), sizeof(subframes[0].xSize));
-	reader.read((char*)&(subframes[0].ySize), sizeof(subframes[0].ySize));
-
-	reader.read((char*)&(subframes[1].xCoordinateDestination), sizeof(subframes[1].xCoordinateDestination));
-	reader.read((char*)&(subframes[1].yCoordinateDestination), sizeof(subframes[1].yCoordinateDestination));
-	reader.read((char*)&(subframes[1].xSize), sizeof(subframes[1].xSize));
-	reader.read((char*)&(subframes[1].ySize), sizeof(subframes[1].ySize));
-
-	subframes[0].xCoordinateDestination -= 0x200;
-	subframes[1].xCoordinateDestination -= 0x200;
-
-	reader.seekg(8, reader.cur);
-
-	unsigned int numberOfFrames;
-	reader.read((char*)&numberOfFrames, sizeof(numberOfFrames));
-	reader.seekg(4, reader.cur);
-
-	for (unsigned int frame = 0; frame < numberOfFrames; frame++)
-	{
-		unsigned short int xCoordinateSource1, yCoordinateSource1, xCoordinateSource2, yCoordinateSource2;
-
-		reader.read((char*)&xCoordinateSource1, sizeof(xCoordinateSource1));
-		reader.read((char*)&yCoordinateSource1, sizeof(yCoordinateSource1));
-		reader.read((char*)&xCoordinateSource2, sizeof(xCoordinateSource2));
-		reader.read((char*)&yCoordinateSource2, sizeof(yCoordinateSource2));
-
-		xCoordinateSource1 -= 0x200;
-		xCoordinateSource2 -= 0x200;
-
-		subframes[0].xCoordinateSources.push_back(xCoordinateSource1);
-		subframes[0].yCoordinateSources.push_back(yCoordinateSource1);
-		subframes[1].xCoordinateSources.push_back(xCoordinateSource2);
-		subframes[1].yCoordinateSources.push_back(yCoordinateSource2);
-	}
-
-	subframes[0].subframeExportsThis = false;
-	subframes[1].subframeExportsThis = false;
-
-	return subframes;
 }
 
 bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes)
@@ -912,7 +929,8 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 					copyRectangleInVRM(levelSubframes[i + 1].xCoordinateDestination, levelSubframes[i + 1].yCoordinateDestination, levelSubframes[i + 1].xSize,
 						levelSubframes[i + 1].ySize, levelSubframes[i + 1].xCoordinateSources[j], levelSubframes[i + 1].yCoordinateSources[j], true);
 
-					texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, j + 1, empty);
+					if (goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, j + 1, empty) != 0)
+						std::cerr << std::format("	Export Error: Level subframe texture {}-tex{}-{}.png failed to export", objectName, (thisMaterial.textureID + 1), (j + 1)) << std::endl;
 				}
 			}
 			levelSubframes[i].subframeExportsThis = false;
@@ -921,6 +939,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 	}
 	if (texPageReturnValue != 0)
 	{
+		std::cerr << std::format("	Export Error: Texture {}-tex{}.png failed to export", objectName, (thisMaterial.textureID + 1)) << std::endl;
 		return false;
 	}
 	return true;
@@ -944,6 +963,7 @@ bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned in
 	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), materialID, (subframe.subframeID + 1), empty);
 	if (texPageReturnValue != 0)
 	{
+		std::cerr << std::format("	Export Error: Object subframe texture {}-tex{}-{}.png failed to export", objectName, (textureID + 1), (subframe.subframeID + 1)) << std::endl;
 		return false;
 	}
 	return true;
