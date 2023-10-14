@@ -131,10 +131,10 @@ Clone the repository into a folder of your choice (e.g. /home/[user]/src).
 
 Navigate to the root of the repository folder and run the following command:
 ```
-> cmake -G "Unix Makefiles" --preset [preset] -DCMAKE_C_COMPILER=[C compiler] -DCMAKE_CXX_COMPILER=[C++ compiler] -DUSE_SHARED_LIBRARIES=1
+> cmake --preset [preset]
 ```
 
-The available presets are _x64-release_, _x64-debug_, _x86-release_, and _x86-debug_. The C and C++ compilers were chosen before, if you're going with the ones I chose then these are gcc and g++ respectively.
+The available presets are _x64-release-linux_ and _x64-debug-linux_. These presets use the compilers, generators, and etc that I use when building for Linux (you can find their exact details in CMakePresets.json). If you would like to change some of the attributes, add more flags to the cmake command as necessary.
 
 You may also want to include a `-DCMAKE_INSTALL_PREFIX=[install prefix]` flag, if you wish to install the program in a location other than /usr/local. (By default CMake installs it into /usr/local, this is the conventional location on Linux for programs that are not managed by any package manager)
 
