@@ -118,13 +118,14 @@ int main(int argc, char* argv[])
 			reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
 
 			if (specificObjectAddress == modelsAddressesStart)
-			{
 				break;
-			}
 
-			objIndex += 1;
+			objIndex++;
 
 			long int nextPos = reader.tellg();
+
+			if (objIndex == 8192)
+				break;
 
 			if (objIndex == selectedModelExport || selectedModelExport == -1)
 			{
@@ -476,9 +477,6 @@ void readPolygons(std::ifstream& reader, std::string objectName, std::string out
 		if (isObject) reader.seekg(uPolygonPosition + 0xC, reader.beg);
 		else reader.seekg(uPolygonPosition + 0x14, reader.beg);
 	}
-
-	//copyRectangleInVRM(levelSubframes[0].xCoordinateDestination, levelSubframes[0].yCoordinateDestination, levelSubframes[0].xSize, levelSubframes[0].ySize,
-	//	levelSubframes[0].xCoordinateSources[0], levelSubframes[0].yCoordinateSources[0], true);
 
 	for (unsigned int m = 0; m < materials.size(); m++)
 	{
