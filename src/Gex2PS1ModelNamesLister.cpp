@@ -78,6 +78,9 @@ int main(int argc, char* argv[])
 
 		long int nextPos = reader.tellg();
 
+		if (nameIterator == 8192)
+			break;
+
 		reader.seekg(specificObjectAddress + 0x24, reader.beg);
 		unsigned int objNameAddr;
 		reader.read((char*)&objNameAddr, sizeof(objNameAddr));

@@ -44,10 +44,10 @@ int main(int argc, char* argv[])
 		return 2;
 	}
 
-	std::ifstream tempReader(inputFile, std::ifstream::binary);
-	tempReader.exceptions(std::ifstream::eofbit);
+	std::ifstream reader(inputFile, std::ifstream::binary);
+	reader.exceptions(std::ifstream::eofbit);
 
-	if (!tempReader)
+	if (!reader)
 	{
 		std::cerr << "Error 3: Failed to read input file" << std::endl;
 		return 3;
@@ -87,22 +87,24 @@ int main(int argc, char* argv[])
 	{
 		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(inputFile, true)));
 		unsigned int bitshift;
-		tempReader.read((char*)&bitshift, sizeof(bitshift));
+		reader.read((char*)&bitshift, sizeof(bitshift));
 		bitshift = ((bitshift >> 9) << 11) + 0x800;
-		tempReader.seekg(0, tempReader.end);
-		size_t filesize = tempReader.tellg();
-		tempReader.seekg(bitshift, tempReader.beg);
+		reader.seekg(0, reader.end);
+		size_t filesize = reader.tellg();
+		reader.seekg(bitshift, reader.beg);
 	
 		std::ofstream tempWriter("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
 
-		while (tempReader.tellg() < filesize)
+		while (reader.tellg() < filesize)
 		{
 			unsigned char data;
-			tempReader.read((char*)&data, sizeof(data));
+			reader.read((char*)&data, sizeof(data));
 			tempWriter << data;
 		}
 		tempWriter.close();
-		std::ifstream reader("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+
+		reader.close();
+		reader.open("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
 
 		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
 
@@ -221,9 +223,11 @@ int main(int argc, char* argv[])
 		}
 		std::remove("Gex2PS1ModelExporterTempfile.drm");
 	}
-	catch (std::ifstream::failure e)
+	catch (std::ifstream::failure &e)
 	{
 		//End of stream exception
+		reader.close();
+		std::remove("Gex2PS1ModelExporterTempfile.drm");
 		std::cerr << "Error 6: End of stream exception" << std::endl;
 		return 6;
 	}
