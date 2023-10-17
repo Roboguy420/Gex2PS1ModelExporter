@@ -27,6 +27,7 @@ unsigned short int** textureDataVRAMMovement = new unsigned short int* [512];
 int initialiseVRM(std::string path)
 {
 	std::ifstream reader(path, std::ifstream::binary);
+	reader.exceptions(std::ifstream::eofbit);
 	reader.seekg(20, reader.beg);
 
 	for (int y = 0; y < 512; y++)

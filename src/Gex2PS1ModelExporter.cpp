@@ -83,6 +83,8 @@ int main(int argc, char* argv[])
 	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
 
+	unsigned int modelsAddressesStart;
+
 	try
 	{
 		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(inputFile, true)));
@@ -108,121 +110,9 @@ int main(int argc, char* argv[])
 
 		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
 
-		unsigned int modelsAddressesStart;
 		reader.seekg(0x3C, reader.beg);
 		reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
 		reader.seekg(modelsAddressesStart, reader.beg);
-
-		unsigned int objIndex = 0;
-		while (selectedModelExport != 0)
-		{
-			unsigned int specificObjectAddress;
-			reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
-
-			if (specificObjectAddress == modelsAddressesStart)
-				break;
-
-			objIndex++;
-
-			long int nextPos = reader.tellg();
-
-			if (objIndex == 8192)
-				break;
-
-			if (objIndex == selectedModelExport || selectedModelExport == -1)
-			{
-				reader.seekg(specificObjectAddress + 0x24, reader.beg);
-				unsigned int objNameAddr;
-				reader.read((char*)&objNameAddr, sizeof(objNameAddr));
-				reader.seekg(objNameAddr, reader.beg);
-				std::string objName;
-				for (int i = 0; i < 8; i++)
-				{
-					char objNameChar;
-					reader.read((char*)&objNameChar, 1);
-					objName += objNameChar;
-				}
-
-				unsigned short int objectCount;
-				unsigned int objectStartAddress;
-				reader.seekg(specificObjectAddress + 0x8, reader.beg);
-				reader.read((char*)&objectCount, sizeof(objectCount));
-				reader.seekg(2, reader.cur);
-				reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
-
-				std::string plural = "";
-				if (objectCount > 1)
-					plural = "s";
-				std::cout << std::format("Found model {} at index {} with {} sub-object{}", objName, objIndex, objectCount, plural) << std::endl;
-
-				for (int i = 0; i < objectCount; i++)
-				{
-					reader.seekg(objectStartAddress + (i * 4), reader.beg);
-					unsigned int objectModelData;
-					reader.read((char*)&objectModelData, sizeof(objectModelData));
-
-					std::string objectNameAndIndex = objName;
-					if (objectCount > 1)
-					{
-						objectNameAndIndex = objName + std::to_string(i + 1);
-					}
-
-					std::cout << std::format("	Reading {}...", objectNameAndIndex) << std::endl;
-
-					reader.seekg(objectModelData, reader.beg);
-					int objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, inputFile);
-					if (!textureFailedToExport && !modelFailedToExport && objectReturnCode == 1)
-					{
-						//At least 1 texture failed to export
-						textureFailedToExport = true;
-					}
-
-					if (objectReturnCode == 2)
-					{
-						//Model failed to export
-						std::cerr << std::format("	Export Error: Model {} failed to export", objectNameAndIndex) << std::endl;
-						modelFailedToExport = true;
-					}
-					else
-					{
-						atLeastOneExportedSuccessfully = true;
-						std::cout << std::format("	Successfully exported {}", objectNameAndIndex) << std::endl;
-					}
-				}
-				if (objIndex == selectedModelExport) { break; }
-			}
-
-			reader.seekg(nextPos, reader.beg);
-		}
-		if (selectedModelExport < 1)
-		{
-			std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(inputFile, false)) << std::endl;
-			reader.seekg(0, reader.beg);
-			unsigned int levelData;
-			reader.read((char*)&levelData, sizeof(levelData));
-			reader.seekg(levelData, reader.beg);
-
-			int levelReturnCode = convertLevelToDAE(reader, outputFolder, inputFile);
-			if (!textureFailedToExport && !modelFailedToExport && levelReturnCode == 1)
-			{
-				//At least 1 texture failed to export
-				textureFailedToExport = true;
-			}
-
-			if (levelReturnCode == 2)
-			{
-				//Model failed to export
-				std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(inputFile, false)) << std::endl;
-				modelFailedToExport = true;
-			}
-			else
-			{
-				atLeastOneExportedSuccessfully = true;
-				std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(inputFile, false)) << std::endl;
-			}
-		}
-		reader.close();
-		std::remove("Gex2PS1ModelExporterTempfile.drm");
 	}
 	catch (std::ifstream::failure &e)
 	{
@@ -232,6 +122,153 @@ int main(int argc, char* argv[])
 		std::cerr << "Error 6: End of stream exception" << std::endl;
 		return 6;
 	}
+
+	unsigned int objIndex = 0;
+
+	while (selectedModelExport != 0)
+	{
+		unsigned int specificObjectAddress;
+		long int nextPos;
+		try
+		{
+			reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
+
+			if (specificObjectAddress == modelsAddressesStart)
+				break;
+
+			objIndex++;
+
+			nextPos = reader.tellg();
+		}
+		catch (std::ifstream::failure &e)
+		{
+			//End of stream exception
+			reader.close();
+			std::remove("Gex2PS1ModelExporterTempfile.drm");
+			std::cerr << "Error 6: End of stream exception" << std::endl;
+			return 6;
+		}
+
+		if (objIndex == 8192)
+			break;
+
+		if (objIndex == selectedModelExport || selectedModelExport == -1)
+		{
+			std::string objName;
+			unsigned short int objectCount;
+			unsigned int objectStartAddress;
+			try
+			{
+				reader.seekg(specificObjectAddress + 0x24, reader.beg);
+				unsigned int objNameAddr;
+				reader.read((char*)&objNameAddr, sizeof(objNameAddr));
+				reader.seekg(objNameAddr, reader.beg);
+				for (int i = 0; i < 8; i++)
+				{
+					char objNameChar;
+					reader.read((char*)&objNameChar, 1);
+					objName += objNameChar;
+				}
+
+				reader.seekg(specificObjectAddress + 0x8, reader.beg);
+				reader.read((char*)&objectCount, sizeof(objectCount));
+				reader.seekg(2, reader.cur);
+				reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
+			}
+			catch (std::ifstream::failure &e)
+			{
+				reader.seekg(nextPos, reader.beg);
+				std::cerr << std::format("Read Error: Error reading metadata of the model at index {}", objIndex) << std::endl;
+				continue;
+			}
+
+			std::string plural = "";
+			if (objectCount > 1)
+				plural = "s";
+			std::cout << std::format("Found model {} at index {} with {} sub-object{}", objName, objIndex, objectCount, plural) << std::endl;
+
+			for (int i = 0; i < objectCount; i++)
+			{
+				int objectReturnCode;
+				std::string objectNameAndIndex = objName;
+				if (objectCount > 1)
+					objectNameAndIndex = objName + std::to_string(i + 1);
+
+				try
+				{
+					reader.seekg(objectStartAddress + (i * 4), reader.beg);
+					unsigned int objectModelData;
+					reader.read((char*)&objectModelData, sizeof(objectModelData));
+
+					std::cout << std::format("	Reading {}...", objectNameAndIndex) << std::endl;
+
+					reader.seekg(objectModelData, reader.beg);
+					objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, inputFile);
+				}
+				catch (std::ifstream::failure &e)
+				{
+					objectReturnCode = 2;
+				}
+
+				if (!textureFailedToExport && !modelFailedToExport && objectReturnCode == 1)
+					textureFailedToExport = true;
+
+				if (objectReturnCode == 2)
+				{
+					//Model failed to export
+					std::cerr << std::format("	Export Error: Model {} failed to export", objectNameAndIndex) << std::endl;
+					modelFailedToExport = true;
+				}
+				else
+				{
+					atLeastOneExportedSuccessfully = true;
+					std::cout << std::format("	Successfully exported {}", objectNameAndIndex) << std::endl;
+				}
+			}
+			if (objIndex == selectedModelExport) { break; }
+		}
+
+		reader.seekg(nextPos, reader.beg);
+	}
+	if (selectedModelExport < 1)
+	{
+		int levelReturnCode;
+		std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+		try
+		{
+			reader.seekg(0, reader.beg);
+			unsigned int levelData;
+			reader.read((char*)&levelData, sizeof(levelData));
+			reader.seekg(levelData, reader.beg);
+
+			levelReturnCode = convertLevelToDAE(reader, outputFolder, inputFile);
+		}
+		catch(std::ifstream::failure &e)
+		{
+			levelReturnCode = 2;
+		}
+
+		if (!textureFailedToExport && !modelFailedToExport && levelReturnCode == 1)
+		{
+			//At least 1 texture failed to export
+			textureFailedToExport = true;
+		}
+
+		if (levelReturnCode == 2)
+		{
+			//Model failed to export
+			std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+			modelFailedToExport = true;
+		}
+		else
+		{
+			atLeastOneExportedSuccessfully = true;
+			std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+		}
+	}
+	reader.close();
+	std::remove("Gex2PS1ModelExporterTempfile.drm");
+	
 	if (!atLeastOneExportedSuccessfully)
 	{
 		//No models were successfully exported
