@@ -221,6 +221,7 @@ int main(int argc, char* argv[])
 				std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(inputFile, false)) << std::endl;
 			}
 		}
+		reader.close();
 		std::remove("Gex2PS1ModelExporterTempfile.drm");
 	}
 	catch (std::ifstream::failure &e)
