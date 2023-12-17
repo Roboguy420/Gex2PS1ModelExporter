@@ -49,20 +49,22 @@ Open Soul Spiral and click on the button "Open a BigFile". Navigate to where _BI
 The return values are as follows:
 * **0:** Successful export with no errors
 * **1:** Insufficient arguments
-* **2:** Input file not found
-* **3:** Failed to read input file
-* **4:** Output folder in 2nd argument does not exist
-* **5:** 3rd argument is not a number -1 or higher
-* **6:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
-* **7:** At least 1 texture failed to export
-* **8:** At least 1 successful export, others had failures
-* **9:** No successful exports, all attempts failed
+* **2:** Improperly formatted arguments
+* **3:** Input file not found
+* **4:** Failed to read input file
+* **5:** Output folder in 2nd argument does not exist
+* **6:** 3rd argument is not a number -1 or higher
+* **7:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
+* **8:** At least 1 texture failed to export
+* **9:** At least 1 successful export, others had failures
+* **10:** No successful exports, all attempts failed
 
 ## Compilation & Building - Windows
 This program requires:
 * [TinyXML2](https://github.com/leethomason/tinyxml2) to make the DAE files
 * [libpng](https://sourceforge.net/projects/libpng/files/) to export textures to PNG
 * [zlib](https://sourceforge.net/projects/libpng/files/zlib/) to compile libpng
+* [getopt](https://github.com/mirror/mingw-w64/tree/master) for the POSIX-style argument parser
 * [CMake](https://cmake.org) to build
 
 Install CMake if you haven't already and clone the TinyXML2 repository onto your computer.
@@ -106,6 +108,17 @@ Copy _libpng16.dll_, _libpng16.lib_, _libpng16d.lib_, _zlibstatic.lib_, and _zli
 Copy and paste _zconf.h_ and _zlib.h_ into _include_. Also copy and paste _png.h_, _pngconf.h_, and _pnglibconf.h_ into there (these files can be found in the root of the libpng source code).
 
 If you have followed these steps correctly, libpng should now be added as an external library.
+
+### getopt (from source)
+I didn't even bother compiling this one, since it's much easier to just include the header and source file and they aren't even that big (their combined filesize is about 20kb). This is the easiest one to do.
+
+Go to the Github repository for mingw-w64 that I linked. Navigate to _mingw-w64-crt/misc_ and download the source file _getopt.c_. Next, navigate to _mingw-w64-headers/crt_ and download the header file _getopt.h_.
+
+Create a new folder in the _lib_ folder of the model exporter and name it _getopt_. Create a folder inside of that and call it _include_. Copy and paste _getopt.c_ and _getopt.h_ into the newly created _include_ folder.
+
+If all has worked well, _getopt_ and all its functions should now be findable and usable with CMake.
+
+The Linux build does not require this step as Linux is more POSIX-compliant than Windows, and the _getopt_ functions are a built-in part of its standard C implementation.
 
 ### Compile
 If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ and _Gex2PS1ModelNamesLister_ as the projects. Click build and the programs should be created.

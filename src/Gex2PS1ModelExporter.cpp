@@ -17,9 +17,11 @@
 #define NOMINMAX
 
 #include "tinyxml2.h"
+#include "getopt.h"
 
 #include "Gex2PS1ModelExporter.h"
 #include "Gex2PS1TextureExporter.h"
+#include "Constants.h"
 #include <filesystem>
 #include <algorithm>
 #include <vector>
@@ -27,21 +29,56 @@
 
 int main(int argc, char* argv[])
 {
-	if (argc < 2)
-	{
-		std::cerr << "Error 1: Need at least the input file to work" << std::endl;
-		return 1;
-		//Needs at least the input file to work
-		//The output destination + selected model index are optional parameters
-	}
-	std::string inputFile = argv[1];
+	std::string inputFile;
 	std::string outputFolder = std::filesystem::current_path().string();
 
+	//Selected export -1 = everything
+	//Selected export 0 = level geometry
+	//Selected export >0 = other object models
+	int selectedModelExport = -1;
+
+	static struct option long_options[] =
+	{
+		{"out", required_argument, NULL, 'o'},
+		{"index", required_argument, NULL, 'i'},
+		{NULL, 0, NULL, 0}
+	};
+
+	int opt;
+	while (opt = getopt_long(argc, argv, "o:i:", long_options, NULL) != -1)
+	{
+		switch (opt)
+		{
+			case 'o':
+				outputFolder = optarg;
+				break;
+			case 'i':
+				if ((selectedModelExport = stringToInt(optarg, -2)) < -1)
+				{
+					std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number]", argv[0]) << std::endl;
+					std::cerr << std::format("Error {}: Selected model index is invalid", EXIT_INDEX_FAILED_PARSE) << std::endl;
+					return EXIT_INDEX_FAILED_PARSE;
+				}
+				break;
+			default:
+				std::cerr << std::format("Error {}: Arguments not formatted properly", EXIT_BAD_ARGS) << std::endl;
+				return EXIT_BAD_ARGS;
+		}
+	}
+
+	if (optind < argc)
+		inputFile = argv[optind];
+	else
+	{
+		std::cerr << std::format("Error {}: Need at least the input file to work", EXIT_INSUFFICIENT_ARGS) << std::endl;
+		return EXIT_INSUFFICIENT_ARGS;
+	}
+	
 	if (!std::filesystem::exists(inputFile))
 	{
 		//Input file doesn't exist
-		std::cerr << "Error 2: Input file does not exist" << std::endl;
-		return 2;
+		std::cerr << std::format("Error {}: Input file does not exist", EXIT_INPUT_NOT_FOUND) << std::endl;
+		return EXIT_INPUT_NOT_FOUND;
 	}
 
 	std::ifstream reader(inputFile, std::ifstream::binary);
@@ -49,35 +86,18 @@ int main(int argc, char* argv[])
 
 	if (!reader)
 	{
-		std::cerr << "Error 3: Failed to read input file" << std::endl;
-		return 3;
+		std::cerr << std::format("Error {}: Failed to read input file", EXIT_INPUT_FAILED_READ) << std::endl;
+		return EXIT_INPUT_FAILED_READ;
 	}
-
-	//Selected export -1 = everything
-	//Selected export 0 = level geometry
-	//Selected export >0 = other object models
-	int selectedModelExport = -1;
-
-	if (argc > 2)
-		outputFolder = argv[2];
 
 	if (!std::filesystem::is_directory(outputFolder))
 	{
 		//Failed to access output folder
-		std::cerr << "Error 4: Output directory does not exist" << std::endl;
-		return 4;
+		std::cerr << std::format("Error {}: Output directory does not exist", EXIT_OUTPUT_NOT_FOUND) << std::endl;
+		return EXIT_OUTPUT_NOT_FOUND;
 	}
 
 	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile, false);
-
-	if (argc > 3)
-	{
-		if ((selectedModelExport = stringToInt(argv[3], -2)) < -1)
-		{
-			std::cerr << "Error 5: Selected model index is invalid" << std::endl;
-			return 5;
-		}
-	}
 
 	bool modelFailedToExport = false;
 	bool textureFailedToExport = false;
@@ -119,8 +139,8 @@ int main(int argc, char* argv[])
 		//End of stream exception
 		reader.close();
 		std::remove("Gex2PS1ModelExporterTempfile.drm");
-		std::cerr << "Error 6: End of stream exception" << std::endl;
-		return 6;
+		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
+		return EXIT_END_OF_STREAM;
 	}
 
 	unsigned int objIndex = 0;
@@ -145,8 +165,8 @@ int main(int argc, char* argv[])
 			//End of stream exception
 			reader.close();
 			std::remove("Gex2PS1ModelExporterTempfile.drm");
-			std::cerr << "Error 6: End of stream exception" << std::endl;
-			return 6;
+			std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
+			return EXIT_END_OF_STREAM;
 		}
 
 		if (objIndex == 8192)
@@ -272,21 +292,21 @@ int main(int argc, char* argv[])
 	if (!atLeastOneExportedSuccessfully)
 	{
 		//No models were successfully exported
-		std::cerr << "Error 9: No models were exported successfully" << std::endl;
-		return 9;
+		std::cerr << std::format("Error {}: No models were exported successfully", EXIT_ALL_MODELS_FAILED_EXPORT) << std::endl;
+		return EXIT_ALL_MODELS_FAILED_EXPORT;
 	}
 	if (modelFailedToExport)
 	{
-		std::cerr << "Error 8: At least one model failed to export" << std::endl;
-		return 8;
+		std::cerr << std::format("Error {}: At least one model failed to export", EXIT_SOME_MODELS_FAILED_EXPORT) << std::endl;
+		return EXIT_SOME_MODELS_FAILED_EXPORT;
 	}
 	if (textureFailedToExport)
 	{
-		std::cerr << "Error 7: At least one texture failed to export" << std::endl;
-		return 7;
+		std::cerr << std::format("Error {}: At least one texture failed to export", EXIT_SOME_TEXTURES_FAILED_EXPORT) << std::endl;
+		return EXIT_SOME_TEXTURES_FAILED_EXPORT;
 	}
 	std::cout << "Exit Code 0: Successful export with no errors" << std::endl;
-	return 0;
+	return EXIT_SUCCESSFUL_EXPORT;
 }
 
 

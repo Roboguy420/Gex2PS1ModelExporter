@@ -47,15 +47,19 @@ if (USE_SHARED_LIBRARIES)
 
 else()
 
-  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\include")
-  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\include")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/lib/libpng/include")
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/lib/tinyxml2/include")
 
   target_link_libraries(gex2ps1modelexporter
-  debug "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\lib\\libpng16d.lib"
-  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\libpng\\lib\\libpng16.lib")
+  debug "${CMAKE_CURRENT_SOURCE_DIR}/lib/libpng/lib/libpng16d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}/lib/libpng/lib/libpng16.lib")
   target_link_libraries(gex2ps1modelexporter
-  debug "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\lib\\tinyxml2d.lib"
-  optimized "${CMAKE_CURRENT_SOURCE_DIR}\\lib\\tinyxml2\\lib\\tinyxml2.lib")
+  debug "${CMAKE_CURRENT_SOURCE_DIR}/lib/tinyxml2/lib/tinyxml2d.lib"
+  optimized "${CMAKE_CURRENT_SOURCE_DIR}/lib/tinyxml2/lib/tinyxml2.lib")
+
+  if (WIN32)
+    target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include")
+  endif()
 
 endif()
 
