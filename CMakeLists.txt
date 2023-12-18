@@ -16,14 +16,41 @@ project ("Gex2PS1ModelExporter")
 
 
 # Model exporter
-file(GLOB HEADER_FILES_EXPORTER include/*.h)
-add_executable (gex2ps1modelexporter "src/Gex2PS1ModelExporter.cpp" "src/Gex2PS1TextureExporter.cpp" ${HEADER_FILES_EXPORTER})
+
+set(SOURCE_FILES_EXPORTER
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/Gex2PS1ModelExporter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/Gex2PS1TextureExporter.cpp
+)
+
+set(HEADER_FILES_EXPORTER
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1SharedFunctions.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1ModelExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1TextureExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelStructs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureStructs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/Constants.h
+)
+
+if (WIN32)
+  list(APPEND SOURCE_FILES_EXPORTER
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include/getopt.c
+  )
+  list(APPEND HEADER_FILES_EXPORTER
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include/getopt.h
+  )
+endif()
+
+add_executable (gex2ps1modelexporter ${SOURCE_FILES_EXPORTER} ${HEADER_FILES_EXPORTER})
 
 set_property(TARGET gex2ps1modelexporter PROPERTY CXX_STANDARD 20)
 
 # TODO: Add tests and install targets if needed.
 
 target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+if (WIN32)
+  target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include")
+endif()
 
 
 # Linking libraries, choose shared or static when running cmake
@@ -57,14 +84,11 @@ else()
   debug "${CMAKE_CURRENT_SOURCE_DIR}/lib/tinyxml2/lib/tinyxml2d.lib"
   optimized "${CMAKE_CURRENT_SOURCE_DIR}/lib/tinyxml2/lib/tinyxml2.lib")
 
-  if (WIN32)
-    target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include")
-  endif()
-
 endif()
 
 
 # Model names lister
+
 set(HEADER_FILES_NAMES_LISTER include/Gex2PS1SharedFunctions.h)
 add_executable (gex2ps1modelnameslister "src/Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
 
