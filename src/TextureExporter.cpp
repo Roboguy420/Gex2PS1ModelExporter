@@ -16,7 +16,7 @@
 
 #include "png.h"
 
-#include "Gex2PS1TextureExporter.h"
+#include "TextureExporter.h"
 
 #include <filesystem>
 #include <format>

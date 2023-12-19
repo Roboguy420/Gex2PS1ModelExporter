@@ -19,8 +19,9 @@
 #include "tinyxml2.h"
 #include "getopt.h"
 
-#include "Gex2PS1ModelExporter.h"
-#include "Gex2PS1TextureExporter.h"
+#include "ModelExporter.h"
+#include "TextureExporter.h"
+#include "ModelNamesLister.h"
 #include "Constants.h"
 #include <filesystem>
 #include <algorithm>
@@ -37,15 +38,18 @@ int main(int argc, char* argv[])
 	// Selected export >0 = other object models
 	int selectedModelExport = -1;
 
+	bool listNamesBool = false;
+
 	static struct option long_options[] =
 	{
 		{"out", required_argument, 0, 'o'},
 		{"index", required_argument, 0, 'i'},
+		{"list", no_argument, 0, 'l'},
 		{0, 0, 0, 0}
 	};
 
 	int opt;
-	while ((opt = getopt_long(argc, argv, "o:i:", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "o:i:l", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -59,6 +63,9 @@ int main(int argc, char* argv[])
 					std::cerr << std::format("Error {}: Selected model index is invalid", EXIT_INDEX_FAILED_PARSE) << std::endl;
 					return EXIT_INDEX_FAILED_PARSE;
 				}
+				break;
+			case 'l':
+				listNamesBool = true;
 				break;
 			default:
 				std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number]", argv[0]) << std::endl;
@@ -137,6 +144,10 @@ int main(int argc, char* argv[])
 		reader.seekg(0x3C, reader.beg);
 		reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
 		reader.seekg(modelsAddressesStart, reader.beg);
+
+		if (listNamesBool)
+			// Break out of sequence entirely, only list names, do not export any models afterwards
+			return listNames(reader, modelsAddressesStart);
 	}
 	catch (std::ifstream::failure &e)
 	{

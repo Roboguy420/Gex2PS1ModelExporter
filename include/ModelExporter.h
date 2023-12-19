@@ -18,7 +18,7 @@
 
 #include "ModelStructs.h"
 #include "TextureStructs.h"
-#include "Gex2PS1SharedFunctions.h"
+#include "SharedFunctions.h"
 #include <iostream>
 #include <stdio.h>
 #include <fstream>

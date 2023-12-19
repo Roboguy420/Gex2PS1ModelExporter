@@ -14,57 +14,13 @@
 	You should have received a copy of the GNU General Public License
 	along with Gex2PS1ModelExporter.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#include "Gex2PS1SharedFunctions.h"
+#include "SharedFunctions.h"
+#include "Constants.h"
 
 #include <filesystem>
-#include <iostream>
 
-int main(int argc, char* argv[])
+int listNames(std::ifstream& reader, unsigned int modelsAddressesStart)
 {
-	if (argc < 2)
-	{
-		return 1;
-		//Needs at least the input file to work
-	}
-	std::string inputFile = argv[1];
-
-	if (!std::filesystem::exists(inputFile))
-	{
-		//Input file doesn't exist
-		return 2;
-	}
-
-	std::ifstream tempReader(inputFile, std::ifstream::binary);
-	tempReader.exceptions(std::ifstream::eofbit);
-
-	if (!tempReader)
-	{
-		return 3;
-	}
-
-	unsigned int bitshift;
-	tempReader.read((char*)&bitshift, sizeof(bitshift));
-	bitshift = ((bitshift >> 9) << 11) + 0x800;
-	tempReader.seekg(0, tempReader.end);
-	size_t filesize = tempReader.tellg();
-	tempReader.seekg(bitshift, tempReader.beg);
-	
-	std::ofstream tempWriter("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
-
-	while (tempReader.tellg() < filesize)
-	{
-		unsigned char data;
-		tempReader.read((char*)&data, sizeof(data));
-		tempWriter << data;
-	}
-	tempWriter.close();
-	std::ifstream reader("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
-
-	unsigned int modelsAddressesStart;
-	reader.seekg(0x3C, reader.beg);
-	reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
-	reader.seekg(modelsAddressesStart, reader.beg);
-
 	int nameIterator = 1;
 	while (true)
 	{
@@ -100,8 +56,6 @@ int main(int argc, char* argv[])
 		reader.seekg(nextPos, reader.beg);
 	}
 
-	reader.close();
-	std::remove("Gex2PS1ModelExporterTempfile.drm");
-
+	std::cout << "Exit Code 0: Successful listing with no errors" << std::endl;
 	return 0;
 }

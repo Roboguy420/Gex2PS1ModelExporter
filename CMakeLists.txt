@@ -18,14 +18,16 @@ project ("Gex2PS1ModelExporter")
 # Model exporter
 
 set(SOURCE_FILES_EXPORTER
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Gex2PS1ModelExporter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Gex2PS1TextureExporter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelExporter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureExporter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelNamesLister.cpp
 )
 
 set(HEADER_FILES_EXPORTER
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1SharedFunctions.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1ModelExporter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/Gex2PS1TextureExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/SharedFunctions.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelNamesLister.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/Constants.h
@@ -87,14 +89,5 @@ else()
 endif()
 
 
-# Model names lister - Likely going to remove this at some point and add a names lister as a flag in the main binary, so I'm not going to fiddle around with this
-
-set(HEADER_FILES_NAMES_LISTER include/Gex2PS1SharedFunctions.h)
-add_executable (gex2ps1modelnameslister "src/Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})
-
-set_property(TARGET gex2ps1modelnameslister PROPERTY CXX_STANDARD 20)
-
-target_include_directories(gex2ps1modelnameslister PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 install(TARGETS gex2ps1modelexporter DESTINATION bin)
-install(TARGETS gex2ps1modelnameslister DESTINATION bin)
