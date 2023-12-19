@@ -32,20 +32,20 @@ int main(int argc, char* argv[])
 	std::string inputFile;
 	std::string outputFolder = std::filesystem::current_path().string();
 
-	//Selected export -1 = everything
-	//Selected export 0 = level geometry
-	//Selected export >0 = other object models
+	// Selected export -1 = everything
+	// Selected export 0 = level geometry
+	// Selected export >0 = other object models
 	int selectedModelExport = -1;
 
 	static struct option long_options[] =
 	{
-		{"out", required_argument, NULL, 'o'},
-		{"index", required_argument, NULL, 'i'},
-		{NULL, 0, NULL, 0}
+		{"out", required_argument, 0, 'o'},
+		{"index", required_argument, 0, 'i'},
+		{0, 0, 0, 0}
 	};
 
 	int opt;
-	while (opt = getopt_long(argc, argv, "o:i:", long_options, NULL) != -1)
+	while ((opt = getopt_long(argc, argv, "o:i:", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -61,22 +61,25 @@ int main(int argc, char* argv[])
 				}
 				break;
 			default:
+				std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number]", argv[0]) << std::endl;
 				std::cerr << std::format("Error {}: Arguments not formatted properly", EXIT_BAD_ARGS) << std::endl;
 				return EXIT_BAD_ARGS;
 		}
 	}
 
+
 	if (optind < argc)
 		inputFile = argv[optind];
 	else
 	{
+		std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number]", argv[0]) << std::endl;
 		std::cerr << std::format("Error {}: Need at least the input file to work", EXIT_INSUFFICIENT_ARGS) << std::endl;
 		return EXIT_INSUFFICIENT_ARGS;
 	}
-	
+
 	if (!std::filesystem::exists(inputFile))
 	{
-		//Input file doesn't exist
+		// Input file doesn't exist
 		std::cerr << std::format("Error {}: Input file does not exist", EXIT_INPUT_NOT_FOUND) << std::endl;
 		return EXIT_INPUT_NOT_FOUND;
 	}
@@ -90,9 +93,10 @@ int main(int argc, char* argv[])
 		return EXIT_INPUT_FAILED_READ;
 	}
 
+
 	if (!std::filesystem::is_directory(outputFolder))
 	{
-		//Failed to access output folder
+		// Failed to access output folder
 		std::cerr << std::format("Error {}: Output directory does not exist", EXIT_OUTPUT_NOT_FOUND) << std::endl;
 		return EXIT_OUTPUT_NOT_FOUND;
 	}
@@ -136,7 +140,7 @@ int main(int argc, char* argv[])
 	}
 	catch (std::ifstream::failure &e)
 	{
-		//End of stream exception
+		// End of stream exception
 		reader.close();
 		std::remove("Gex2PS1ModelExporterTempfile.drm");
 		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
@@ -162,7 +166,7 @@ int main(int argc, char* argv[])
 		}
 		catch (std::ifstream::failure &e)
 		{
-			//End of stream exception
+			// End of stream exception
 			reader.close();
 			std::remove("Gex2PS1ModelExporterTempfile.drm");
 			std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
@@ -235,7 +239,7 @@ int main(int argc, char* argv[])
 
 				if (objectReturnCode == 2)
 				{
-					//Model failed to export
+					// Model failed to export
 					std::cerr << std::format("	Export Error: Model {} failed to export", objectNameAndIndex) << std::endl;
 					modelFailedToExport = true;
 				}
@@ -270,13 +274,13 @@ int main(int argc, char* argv[])
 
 		if (!textureFailedToExport && !modelFailedToExport && levelReturnCode == 1)
 		{
-			//At least 1 texture failed to export
+			// At least 1 texture failed to export
 			textureFailedToExport = true;
 		}
 
 		if (levelReturnCode == 2)
 		{
-			//Model failed to export
+			// Model failed to export
 			std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(inputFile, false)) << std::endl;
 			modelFailedToExport = true;
 		}
@@ -291,7 +295,7 @@ int main(int argc, char* argv[])
 	
 	if (!atLeastOneExportedSuccessfully)
 	{
-		//No models were successfully exported
+		// No models were successfully exported
 		std::cerr << std::format("Error {}: No models were exported successfully", EXIT_ALL_MODELS_FAILED_EXPORT) << std::endl;
 		return EXIT_ALL_MODELS_FAILED_EXPORT;
 	}
@@ -376,7 +380,7 @@ int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::stri
 
 	readVertices(reader, vertexCount, vertexStartAddress, NULL, NULL, false, vertices);
 
-	//Read vertex colours
+	// Read vertex colours
 
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
@@ -453,11 +457,11 @@ void readArmature(std::ifstream &reader, unsigned short int boneCount, unsigned 
 
 	for (unsigned short int b = 0; b < boneCount; b++)
 	{
-		//Slightly hacky solution for creating a vector with the needed size
-		//This is as bones can have "ancestor IDs"
-		//Later on, the program tries access a bone using the index ancestor IDs
-		//If there aren't already enough bones in the vector, the program would crash, as it tries to access a bone that is out of bounds of the bones array
-		//By doing this beforehand, it makes sure there will not be an out of bounds exception
+		// Slightly hacky solution for creating a vector with the needed size
+		// This is as bones can have "ancestor IDs"
+		// Later on, the program tries access a bone using the index ancestor IDs
+		// If there aren't already enough bones in the vector, the program would crash, as it tries to access a bone that is out of bounds of the bones array
+		// By doing this beforehand, it makes sure there will not be an out of bounds exception
 		Bone nullBone;
 		bones.push_back(nullBone);
 	}
@@ -740,7 +744,7 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 
 			if (isObject)
 			{
-				//Find CLUT value and texture page for frame 1, add all subframes to material
+				// Find CLUT value and texture page for frame 1, add all subframes to material
 				unsigned int subframeIncrement = 0;
 				int subframeClutValue = -1;
 				int subframeTexturePage = -1;
@@ -759,7 +763,7 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 					}
 				}
 
-				//Find all subframes with same CLUT and texture page, and add the UVs to the material subframes
+				// Find all subframes with same CLUT and texture page, and add the UVs to the material subframes
 				unsigned int a = subframes.size();
 				unsigned int b = 0;
 				for (unsigned int i = 0; i < subframes.size(); i++)
@@ -780,7 +784,7 @@ PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialSta
 	}
 	else
 	{
-		//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
+		// For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
 		bool newMaterial = true;
 		for (int m = 0; m < materials.size(); m++)
 		{
@@ -849,7 +853,7 @@ void readObjectPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Materi
 	}
 	else
 	{
-		//For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
+		// For "fake materials", AKA polygons that don't actually have any materials that point to them in the files
 		realMaterial = false;
 
 		reader.read((char*)&thisMaterial.redVal, 1);
@@ -867,8 +871,8 @@ void readLevelPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Materia
 
 	reader.read((char*)&materialAddress, sizeof(materialAddress));
 
-	//0x02 = Animated texture flag
-	//0x80 = Invisible texture flag
+	// 0x02 = Animated texture flag
+	// 0x80 = Invisible texture flag
 	if (materialAddress != 0xFFFF && (polygonFlags & 0x80) != 0x80)
 	{
 		reader.seekg(materialAddress, reader.beg);
@@ -938,7 +942,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 	float southCoord = materialUVs[0].v;
 	float northCoord = materialUVs[materialUVs.size() - 1].v;
 
-	//Translate to bottom left
+	// Translate to bottom left
 	for (const unsigned int& polygonID : polygonIDs)
 	{
 		polygons[polygonID].uv1.u -= leftCoord;
@@ -949,7 +953,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 		polygons[polygonID].uv3.v -= southCoord;
 	}
 
-	//Stretch up to top right
+	// Stretch up to top right
 	float stretchInU = 1.0f / (rightCoord - leftCoord);
 	float stretchInV = 1.0f / (northCoord - southCoord);
 	if (rightCoord - leftCoord == 0)
@@ -967,7 +971,7 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 		polygons[polygonID].uv3.v *= stretchInV;
 	}
 
-	//Export textures
+	// Export textures
 	unsigned int leftCoordInt = floor(leftCoord * 255.0f + 0.5f);
 	unsigned int rightCoordInt = floor(rightCoord * 255.0f + 0.5f);
 	unsigned int southCoordInt = 255 - floor(southCoord * 255.0f + 0.5f);
@@ -1034,8 +1038,8 @@ bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned in
 
 int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials)
 {
-	//Tried using ASSIMP but there was a severe lack of tutorials on how to create a scene from scratch. Pretty much everything online focused solely on importing.
-	//So instead, here is my attempt at creating a DAE file using tinyxml2. Enjoy...
+	// Tried using ASSIMP but there was a severe lack of tutorials on how to create a scene from scratch. Pretty much everything online focused solely on importing.
+	// So instead, here is my attempt at creating a DAE file using tinyxml2. Enjoy...
 
 	int returnValue = 0;
 
@@ -1109,7 +1113,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 			returnValue = 1;
 		}
 
-		//Textures
+		// Textures
 
 		if (materials[m].realMaterial && materials[m].properlyExported)
 		{
@@ -1121,7 +1125,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 			library_images->LinkEndChild(image);
 		}
 
-		//Effects
+		// Effects
 
 		if (materials[m].properlyExported)
 		{
@@ -1197,7 +1201,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 			library_effects->LinkEndChild(effect);
 		}
 
-		//Materials
+		// Materials
 
 		tinyxml2::XMLElement* material = outputDAE.NewElement("material");
 		material->SetAttribute("id", std::format("{}-mat{}", objectName, m).c_str());
@@ -1210,7 +1214,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		}
 		library_materials->LinkEndChild(material);
 
-		//Geometry Setup
+		// Geometry Setup
 
 		std::vector<PolygonStruct> meshPolygons;
 		std::vector<Vertex> meshVertices;
@@ -1230,7 +1234,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		geometry->SetAttribute("name", std::format("meshId{}_name", m).c_str());
 		tinyxml2::XMLElement* mesh = outputDAE.NewElement("mesh");
 
-		//Positions
+		// Positions
 
 		tinyxml2::XMLElement* positionsSource = outputDAE.NewElement("source");
 		positionsSource->SetAttribute("id", std::format("meshId{}-positions", m).c_str());
@@ -1270,7 +1274,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		positionsSource->LinkEndChild(positionsTechnique_common);
 		mesh->LinkEndChild(positionsSource);
 
-		//Textures
+		// Textures
 
 		tinyxml2::XMLElement* texturesSource = outputDAE.NewElement("source");
 		texturesSource->SetAttribute("id", std::format("meshId{}-tex", m).c_str());
@@ -1309,7 +1313,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		texturesSource->LinkEndChild(texturesTechnique_common);
 		mesh->LinkEndChild(texturesSource);
 
-		//Colours
+		// Colours
 
 		tinyxml2::XMLElement* coloursSource = outputDAE.NewElement("source");
 		coloursSource->SetAttribute("id", std::format("meshId{}-color", m).c_str());
@@ -1320,7 +1324,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		std::string coloursString = " ";
 		for (int c = 0; c < meshPolygons.size() * 3; c++)
 		{
-			//Temporary thing as I'm not sure how colours work in the models yet
+			// Temporary thing as I'm not sure how colours work in the models yet
 			if (!materials[m].realMaterial)
 			{
 				coloursString += std::to_string(rgbToLinearRgb(materials[m].redVal) / 1.25f) + " ";
@@ -1355,7 +1359,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		coloursSource->LinkEndChild(coloursTechnique_common);
 		mesh->LinkEndChild(coloursSource);
 
-		//Vertices
+		// Vertices
 
 		tinyxml2::XMLElement* xVertices = outputDAE.NewElement("vertices");
 		xVertices->SetAttribute("id", std::format("meshId{}-vertices", m).c_str());
@@ -1365,7 +1369,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		xVertices->LinkEndChild(input);
 		mesh->LinkEndChild(xVertices);
 
-		//Polygons
+		// Polygons
 
 		tinyxml2::XMLElement* polylist = outputDAE.NewElement("polylist");
 		polylist->SetAttribute("count", meshPolygons.size());
@@ -1403,12 +1407,12 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		polylist->LinkEndChild(pPolylist);
 		mesh->LinkEndChild(polylist);
 
-		//Linking geometry
+		// Linking geometry
 
 		geometry->LinkEndChild(mesh);
 		library_geometries->LinkEndChild(geometry);
 
-		//Visual Scenes
+		// Visual Scenes
 
 		tinyxml2::XMLElement* instance_geometry = outputDAE.NewElement("instance_geometry");
 		instance_geometry->SetAttribute("url", std::format("#meshId{}", m).c_str());
@@ -1455,7 +1459,7 @@ int XMLExport(std::string outputFolder, std::string objectName, std::vector<Poly
 		return returnValue;
 	}
 
-	//Could not export
+	// Could not export
 	return 2;
 }
 

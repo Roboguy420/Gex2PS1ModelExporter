@@ -87,7 +87,7 @@ else()
 endif()
 
 
-# Model names lister
+# Model names lister - Likely going to remove this at some point and add a names lister as a flag in the main binary, so I'm not going to fiddle around with this
 
 set(HEADER_FILES_NAMES_LISTER include/Gex2PS1SharedFunctions.h)
 add_executable (gex2ps1modelnameslister "src/Gex2PS1ModelNamesLister.cpp" ${HEADER_FILES_NAMES_LISTER})

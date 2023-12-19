@@ -24,8 +24,9 @@ The 3rd parameter is the **model index**. This is the index of whichever model y
 
 Usage on the command line is as follows:
 ```
-> gex2ps1modelexporter [input file] [output folder] [model index]
+> gex2ps1modelexporter file [-o --out folder] [-i --index number]
 ```
+Where _file_ is the input .drm file, _folder_ is the folder where the .dae files and textures are output to, and _number_ is the index of the model.
 
 ### Model Names Lister
 There is only 1 parameter in the program, which is the **input file**. This is the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
@@ -110,13 +111,13 @@ Copy and paste _zconf.h_ and _zlib.h_ into _include_. Also copy and paste _png.h
 If you have followed these steps correctly, libpng should now be added as an external library.
 
 ### getopt (from source)
-I didn't even bother compiling this one, since it's much easier to just include the header and source file and they aren't even that big (their combined filesize is about 20kb). This is the easiest one to do.
+I didn't even bother compiling this one into a library, since it's much easier to just include the header file and compile the source file in the main binary and they aren't even that big (their combined filesize is about 20kb). This is the easiest one to do.
 
 Go to the Github repository for mingw-w64 that I linked. Navigate to _mingw-w64-crt/misc_ and download the source file _getopt.c_. Next, navigate to _mingw-w64-headers/crt_ and download the header file _getopt.h_.
 
 Create a new folder in the _lib_ folder of the model exporter and name it _getopt_. Create a folder inside of that and call it _include_. Copy and paste _getopt.c_ and _getopt.h_ into the newly created _include_ folder.
 
-If all has worked well, _getopt_ and all its functions should now be findable and usable with CMake.
+If all has worked well, _getopt_ and all its functions should now be findable and usable with CMake and within your IDE/code editor.
 
 The Linux build does not require this step as Linux is more POSIX-compliant than Windows, and the _getopt_ functions are a built-in part of its standard C implementation.
 
