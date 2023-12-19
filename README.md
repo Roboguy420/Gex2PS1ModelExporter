@@ -13,27 +13,19 @@ RPM 64-bit release is gex2ps1modelexporter-[ver]-[rel].x86_64.rpm
 Debian AMD64 release is gex2ps1modelexporter_[ver]-[rel]_amd64.deb
 
 ## Usage
-### Model Exporter
-There are 3 parameters in the program, 1 is needed and the other 2 are optional.
+There is 1 needed parameter in the program. This is the **input file**, the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
 
-The 1st parameter is the **input file**. This is the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
+There are 3 additional flags, 2 of them with arguments and 1 of them is non-argument.
 
-The 2nd parameter is the **output folder**. This is the folder where the models will be output. Note that this does not create a folder with the name of the parameter; the folder must be preexisting in order to work. If there is no 2nd parameter, it uses the current working directory.
+The 1st additional flag is the **output folder**, specified by _-o_ or _--out_. This is the folder where the models will be output. Note that this does not create a folder with the name of the parameter; the folder must be preexisting in order to work. If this flag does not exist, it uses the current working directory.
 
-The 3rd parameter is the **model index**. This is the index of whichever model you want to export. The value -1 is reserved for exporting everything. The value 0 is reserved for the level geometry. Any value >0 is used for the several other models stored in the input file. If there is no 3rd parameter, it defaults to exporting everything.
+The 2nd additional flag is the **model index**, specified by _-i_ or _--index_. This is the index of whichever model you want to export. The value -1 is reserved for exporting everything. The value 0 is reserved for the level geometry. Any value >0 is used for the several other models stored in the input file. If this flag does not exist, it defaults to exporting everything.
 
-Usage on the command line is as follows:
-```
-> gex2ps1modelexporter file [-o --out folder] [-i --index number]
-```
-Where _file_ is the input .drm file, _folder_ is the folder where the .dae files and textures are output to, and _number_ is the index of the model.
-
-### Model Names Lister
-There is only 1 parameter in the program, which is the **input file**. This is the model file from Gex 2 (extension is _.drm_). The parameter can be either the local location of the file, relative to the current working directory, or the exact location (specified on most OS's as having a forward slash at the start. On windows you put the volume at the start, e.g. C:\\)
+The 3rd additional flag is the **names lister flag**, specified by _-l_ or _--list_. This is a non-argument flag that simply tells the program to list the names of all the models found within the file along with their respective index to stdout, rather than exporting them to .dae files. Note that you can include the output and index flags alongside the list flag without errors occurring, but the program won't do anything with the information aside from the preexisting error and existence checks.
 
 Usage on the command line is as follows:
 ```
-> gex2ps1modelnameslister [input file]
+> gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]
 ```
 
 ## Getting the Model Files
@@ -122,7 +114,7 @@ If all has worked well, _getopt_ and all its functions should now be findable an
 The Linux build does not require this step as Linux is more POSIX-compliant than Windows, and the _getopt_ functions are a built-in part of its standard C implementation.
 
 ### Compile
-If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ and _Gex2PS1ModelNamesLister_ as the projects. Click build and the programs should be created.
+If you are using Visual Studio as the CMake generator, build the Visual Studio solution using CMake. Open the generated solution file, go to Build -> Batch Build, and select whichever one you were working with, using _Gex2PS1ModelExporter_ as the project. Click build and the programs should be created.
 
 You will also need the file _libpng16.dll_ in the same folder as the compiled program in order for it to run. Copy and paste it into whichever folder the program is in.
 
@@ -162,7 +154,7 @@ Change directory to where it was built:
 > cmake --build .
 ```
 
-If all has went well, both gex2ps1modelexporter and gex2ps1modelnameslister will be built in the folder with no errors.
+If all has went well, gex2ps1modelexporter will be built in the folder with no errors.
 
 ### Install
 If you wish to install the program, navigate to where the makefile is (this should be out/build/[preset] relative to the source code).
@@ -172,7 +164,7 @@ Run the following command:
 > cmake --install .
 ```
 
-If all has went well, both gex2ps1modelexporter and gex2ps1modelnameslister will be installed in the chosen installation folder with no errors.
+If all has went well, gex2ps1modelexporter will be installed in the chosen installation folder with no errors.
 
 ## Compatibility
 The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, x86-64 Red Hat-based Linux, and AMD64 Debian GNU/Linux. They have been tested and found to be working on Windows 10 64-bit, Artix Linux, Fedora Linux x86-64, and Debian Sid (unstable Trixie as of writing) AMD64 respectively.
