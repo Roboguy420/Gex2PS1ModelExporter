@@ -18,7 +18,7 @@
 
 #include <vector>
 
-//"Intermediary" model structures
+// "Intermediary" model structures
 
 struct Vertex
 {
@@ -42,11 +42,11 @@ struct UV
 {
 	float u, v;
 };
-bool sortUCoord(const UV &a, const UV &b)
+inline bool sortUCoord(const UV &a, const UV &b)
 {
 	return a.u < b.u;
 }
-bool sortVCoord(const UV &a, const UV &b)
+inline bool sortVCoord(const UV &a, const UV &b)
 {
 	return a.v < b.v;
 }
@@ -70,7 +70,7 @@ struct ObjectAnimationSubframe
 struct Material
 {
 	bool realMaterial;
-	bool visible; //Only used for level geometry
+	bool visible; // Only used for level geometry
 	bool properlyExported;
 	unsigned char redVal;
 	unsigned char blueVal;

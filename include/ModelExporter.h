@@ -42,8 +42,6 @@ std::vector<LevelAnimationSubframe> readLevelAnimationSubFrames(std::ifstream& r
 LevelAnimationSubframe* readLevelAnimationSubFrame(std::ifstream& reader, unsigned int baseMaterialAddress);
 bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
 bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe);
-int XMLExport(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
-float rgbToLinearRgb(unsigned char colour);
 
 int stringToInt(std::string inputString, int failValue)
 {
@@ -76,74 +74,6 @@ std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
 		return filePath + fileName.substr(0, extensionStart);
 	}
 	return fileName.substr(0, extensionStart);
-}
-
-std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
-{
-	//Workaround for those pesky floating point rounding errors whenever you divide a number by power of 10
-	
-	//powerOfTen is the index of whichever power of ten you're dividing by
-	//E.g. if you wanted to divide by 1000, you would use 3 for powerOfTen, as 10^3 = 1000
-	
-	if (powerOfTen == 0)
-	{
-		return std::to_string(inputNumber);
-	}
-
-	std::string leftOfDecimal;
-	std::string rightOfDecimal;
-
-	std::string inputNumberString = std::to_string(inputNumber);
-	bool negative = false;
-	if (inputNumberString[0] == '-')
-	{
-		inputNumberString.erase(0, 1);
-		negative = true;
-	}
-	
-	if (inputNumberString.length() <= powerOfTen)
-	{
-		leftOfDecimal = "0";
-		rightOfDecimal = inputNumberString;
-		for (int i = 0; i < powerOfTen - inputNumberString.length(); i++)
-		{
-			rightOfDecimal = "0" + rightOfDecimal;
-		}
-	}
-	else
-	{
-		std::string inputNumberStringLeft = inputNumberString;
-		std::string inputNumberStringRight = inputNumberString;
-		leftOfDecimal = inputNumberStringLeft.erase(inputNumberString.length() - powerOfTen, powerOfTen);
-		rightOfDecimal = inputNumberStringRight.erase(0, inputNumberString.length() - powerOfTen);
-	}
-	
-	if (negative)
-	{
-		leftOfDecimal = '-' + leftOfDecimal;
-	}
-
-	int indexOfLastNonZero = -1;
-
-	for (int c = 0; c < rightOfDecimal.length(); c++)
-	{
-		if (rightOfDecimal[c] != '0')
-		{
-			indexOfLastNonZero = c;
-		}
-	}
-
-	if (indexOfLastNonZero < rightOfDecimal.length() - 1 && indexOfLastNonZero != -1)
-	{
-		rightOfDecimal = rightOfDecimal.erase(indexOfLastNonZero + 1, std::string::npos);
-	}
-
-	if (rightOfDecimal == "")
-	{
-		rightOfDecimal = "0";
-	}
-
-	return std::format("{}.{}", leftOfDecimal, rightOfDecimal);
 }
 
 unsigned int oneOrZero(auto number, auto threshold)

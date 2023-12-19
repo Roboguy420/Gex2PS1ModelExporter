@@ -34,3 +34,6 @@ inline char directorySeparator()
 	return '/';
 #endif
 }
+
+float rgbToLinearRgb(unsigned char colour);
+std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen);

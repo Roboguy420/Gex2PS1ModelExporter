@@ -18,9 +18,11 @@ project ("Gex2PS1ModelExporter")
 # Model exporter
 
 set(SOURCE_FILES_EXPORTER
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/SharedFunctions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelExporter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureExporter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelNamesLister.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/XMLExport.cpp
 )
 
 set(HEADER_FILES_EXPORTER
@@ -31,6 +33,7 @@ set(HEADER_FILES_EXPORTER
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/Constants.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLExport.h
 )
 
 if (WIN32)
