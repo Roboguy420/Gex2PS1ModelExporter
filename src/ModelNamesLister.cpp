@@ -21,6 +21,8 @@
 
 int listNames(std::ifstream& reader, unsigned int modelsAddressesStart)
 {
+	reader.seekg(modelsAddressesStart, reader.beg);
+
 	int nameIterator = 1;
 	while (true)
 	{
