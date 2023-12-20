@@ -17,6 +17,7 @@
 #include "PolygonsInterpreter.h"
 #include "TextureExporter.h"
 
+#include <cmath>
 #include <fstream>
 #include <string>
 #include <format>
