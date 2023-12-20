@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 		inputFile = argv[optind];
 	else
 	{
-		std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number]", argv[0]) << std::endl;
+		std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number] [-l --list]", argv[0]) << std::endl;
 		std::cerr << std::format("Error {}: Need at least the input file to work", EXIT_INSUFFICIENT_ARGS) << std::endl;
 		return EXIT_INSUFFICIENT_ARGS;
 	}
