@@ -18,6 +18,7 @@
 
 #include <string>
 #include <format>
+#include <cmath>
 
 float rgbToLinearRgb(unsigned char colour)
 {
