@@ -19,6 +19,7 @@
 #include "ModelStructs.h"
 #include "TextureStructs.h"
 #include "SharedFunctions.h"
+
 #include <iostream>
 #include <stdio.h>
 #include <fstream>
@@ -27,21 +28,6 @@
 
 int convertObjToDAE(std::ifstream& reader, std::string outputFolder, std::string objectName, std::string inputFile);
 int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::string inputFile);
-void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
-Vertex readVertex(std::ifstream& reader, unsigned int v);
-void readArmature(std::ifstream& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
-void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
-void readPolygons(std::ifstream& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices);
-PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes);
-void readObjectPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Material& thisMaterial, bool& realMaterial, unsigned int& materialAddress);
-void readLevelPolygon(std::ifstream& reader, PolygonStruct& thisPolygon, Material& thisMaterial, bool& realMaterial, unsigned int& materialAddress);
-Material readMaterial(std::ifstream& reader);
-std::vector<ObjectAnimationSubframe> readObjectAnimationSubFrames(std::ifstream& reader, unsigned int textureAnimationsStartAddress);
-ObjectAnimationSubframe readObjectAnimationSubFrame(std::ifstream& reader, unsigned int baseMaterialAddress);
-std::vector<LevelAnimationSubframe> readLevelAnimationSubFrames(std::ifstream& reader, unsigned int textureAnimationsStartAddress);
-LevelAnimationSubframe* readLevelAnimationSubFrame(std::ifstream& reader, unsigned int baseMaterialAddress);
-bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
-bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe);
 
 int stringToInt(std::string inputString, int failValue)
 {

@@ -16,10 +16,12 @@
 
 #pragma once
 
+#include "tinyxml2.h"
+
+#include "ModelStructs.h"
+
 #include <iostream>
 #include <vector>
-#include "ModelStructs.h"
-#include "tinyxml2.h"
 
 int exportToXML(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
 

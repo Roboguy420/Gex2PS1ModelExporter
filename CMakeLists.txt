@@ -21,21 +21,26 @@ set(SOURCE_FILES_EXPORTER
   ${CMAKE_CURRENT_SOURCE_DIR}/src/SharedFunctions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelExporter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureExporter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/VerticesInterpreter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/PolygonsInterpreter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelNamesLister.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/XMLExport.cpp
 )
 
 set(HEADER_FILES_EXPORTER
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelStructs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/SharedFunctions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelExporter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureExporter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/VerticesInterpreter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/PolygonsInterpreter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelNamesLister.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelStructs.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/TextureStructs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/Constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLExport.h
 )
 
+# Windows does not have getopt functions natively so you have to use a third party implementation of them
 if (WIN32)
   list(APPEND SOURCE_FILES_EXPORTER
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/getopt/include/getopt.c
@@ -48,8 +53,6 @@ endif()
 add_executable (gex2ps1modelexporter ${SOURCE_FILES_EXPORTER} ${HEADER_FILES_EXPORTER})
 
 set_property(TARGET gex2ps1modelexporter PROPERTY CXX_STANDARD 20)
-
-# TODO: Add tests and install targets if needed.
 
 target_include_directories(gex2ps1modelexporter PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 

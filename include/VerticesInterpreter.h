@@ -16,12 +16,11 @@
 
 #pragma once
 
-#include "TextureStructs.h"
-#include "SharedFunctions.h"
+#include "ModelStructs.h"
 
-#include <string>
+#include <iostream>
 
-int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes);
-bool resetModifiedVRAM();
-int initialiseVRM(std::string path);
-int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short int yCoordinateDestination, unsigned short int xSize, unsigned short int ySize, unsigned short int xCoordinateSource, unsigned short int yCoordinateSource, bool useAlreadyModifiedVRAMAsBase);
+void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
+Vertex readVertex(std::ifstream& reader, unsigned int v);
+void readArmature(std::ifstream& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
+void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
