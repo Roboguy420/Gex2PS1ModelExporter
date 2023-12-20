@@ -16,6 +16,7 @@
 
 #define NOMINMAX
 
+#include "SharedFunctions.h"
 #include "ModelExporter.h"
 #include "ModelNamesLister.h"
 #include "TextureExporter.h"
@@ -115,6 +116,39 @@ int main(int argc, char* argv[])
 	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
 
+	if (readFile(reader, inputFile, outputFolder, selectedModelExport, listNamesBool,
+		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully) == 1)
+	{
+		// End of stream exception
+		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
+		return EXIT_END_OF_STREAM;
+	}
+	
+	if (!atLeastOneExportedSuccessfully)
+	{
+		// No models were successfully exported
+		std::cerr << std::format("Error {}: No models were exported successfully", EXIT_ALL_MODELS_FAILED_EXPORT) << std::endl;
+		return EXIT_ALL_MODELS_FAILED_EXPORT;
+	}
+	if (modelFailedToExport)
+	{
+		std::cerr << std::format("Error {}: At least one model failed to export", EXIT_SOME_MODELS_FAILED_EXPORT) << std::endl;
+		return EXIT_SOME_MODELS_FAILED_EXPORT;
+	}
+	if (textureFailedToExport)
+	{
+		std::cerr << std::format("Error {}: At least one texture failed to export", EXIT_SOME_TEXTURES_FAILED_EXPORT) << std::endl;
+		return EXIT_SOME_TEXTURES_FAILED_EXPORT;
+	}
+	std::cout << "Exit Code 0: Successful export with no errors" << std::endl;
+	return EXIT_SUCCESSFUL_EXPORT;
+}
+
+
+
+int readFile(std::ifstream& reader, std::string inputFile, std::string outputFolder, int selectedModelExport, bool listNamesBool,
+	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully)
+{
 	unsigned int modelsAddressesStart;
 
 	try
@@ -155,8 +189,7 @@ int main(int argc, char* argv[])
 		// End of stream exception
 		reader.close();
 		std::remove("Gex2PS1ModelExporterTempfile.drm");
-		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
-		return EXIT_END_OF_STREAM;
+		return 1;
 	}
 
 	unsigned int objIndex = 0;
@@ -181,8 +214,7 @@ int main(int argc, char* argv[])
 			// End of stream exception
 			reader.close();
 			std::remove("Gex2PS1ModelExporterTempfile.drm");
-			std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
-			return EXIT_END_OF_STREAM;
+			return 1;
 		}
 
 		if (objIndex == 8192)
@@ -193,6 +225,7 @@ int main(int argc, char* argv[])
 			std::string objName;
 			unsigned short int objectCount;
 			unsigned int objectStartAddress;
+
 			try
 			{
 				reader.seekg(specificObjectAddress + 0x24, reader.beg);
@@ -304,25 +337,8 @@ int main(int argc, char* argv[])
 	}
 	reader.close();
 	std::remove("Gex2PS1ModelExporterTempfile.drm");
-	
-	if (!atLeastOneExportedSuccessfully)
-	{
-		// No models were successfully exported
-		std::cerr << std::format("Error {}: No models were exported successfully", EXIT_ALL_MODELS_FAILED_EXPORT) << std::endl;
-		return EXIT_ALL_MODELS_FAILED_EXPORT;
-	}
-	if (modelFailedToExport)
-	{
-		std::cerr << std::format("Error {}: At least one model failed to export", EXIT_SOME_MODELS_FAILED_EXPORT) << std::endl;
-		return EXIT_SOME_MODELS_FAILED_EXPORT;
-	}
-	if (textureFailedToExport)
-	{
-		std::cerr << std::format("Error {}: At least one texture failed to export", EXIT_SOME_TEXTURES_FAILED_EXPORT) << std::endl;
-		return EXIT_SOME_TEXTURES_FAILED_EXPORT;
-	}
-	std::cout << "Exit Code 0: Successful export with no errors" << std::endl;
-	return EXIT_SUCCESSFUL_EXPORT;
+
+	return 0;
 }
 
 

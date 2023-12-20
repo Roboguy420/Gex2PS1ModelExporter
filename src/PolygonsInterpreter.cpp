@@ -22,7 +22,9 @@
 #include <format>
 #include <algorithm>
 
-void readPolygons(std::ifstream& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount, unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials, std::vector<Vertex>& vertices)
+void readPolygons(std::ifstream& reader, std::string objectName, std::string outputFolder, unsigned short int polygonCount,
+    unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons,
+    std::vector<Material>& materials, std::vector<Vertex>& vertices)
 {
 	if (polygonStartAddress == 0 || polygonCount == 0) { return; }
 
@@ -182,7 +184,8 @@ LevelAnimationSubframe* readLevelAnimationSubFrame(std::ifstream &reader, unsign
 	return subframes;
 }
 
-PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject, std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
+PolygonStruct readPolygon(std::ifstream& reader, unsigned int p, int materialStartAddress, bool isObject,
+    std::vector<Material>& materials, std::vector<Vertex>& vertices, std::vector<ObjectAnimationSubframe>& subframes)
 {
 	PolygonStruct thisPolygon;
 
@@ -420,7 +423,8 @@ Material readMaterial(std::ifstream& reader)
 	return thisMaterial;
 }
 
-bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial, std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes)
+bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial,
+    std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes)
 {
 	std::vector<UV> materialUVs;
 	std::vector<unsigned int> polygonIDs;
@@ -479,7 +483,9 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
 	int texPageReturnValue;
-	texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, 0, levelSubframes);
+	texPageReturnValue = goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt,
+        southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, 0, levelSubframes);
+
 	if (exportLevelAnimations)
 	{
 		std::vector<LevelAnimationSubframe> empty;
@@ -494,8 +500,10 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 					copyRectangleInVRM(levelSubframes[i + 1].xCoordinateDestination, levelSubframes[i + 1].yCoordinateDestination, levelSubframes[i + 1].xSize,
 						levelSubframes[i + 1].ySize, levelSubframes[i + 1].xCoordinateSources[j], levelSubframes[i + 1].yCoordinateSources[j], true);
 
-					if (goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, j + 1, empty) != 0)
-						std::cerr << std::format("	Export Error: Level subframe texture {}-tex{}-{}.png failed to export", objectName, (thisMaterial.textureID + 1), (j + 1)) << std::endl;
+					if (goToTexPageAndApplyCLUT(thisMaterial.texturePage, thisMaterial.clutValue, leftCoordInt, rightCoordInt, southCoordInt,
+                        northCoordInt, objectName, outputFolder, (thisMaterial.textureID + 1), materialID, j + 1, empty) != 0)
+                    { std::cerr << std::format("	Export Error: Level subframe texture {}-tex{}-{}.png failed to export",
+                        objectName, (thisMaterial.textureID + 1), (j + 1)) << std::endl; }
 				}
 			}
 			levelSubframes[i].subframeExportsThis = false;
@@ -510,7 +518,8 @@ bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::str
 	return true;
 }
 
-bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName, std::string outputFolder, ObjectAnimationSubframe subframe)
+bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName,
+    std::string outputFolder, ObjectAnimationSubframe subframe)
 {
 	std::sort(subframe.UVs.begin(), subframe.UVs.end(), sortUCoord);
 	float leftCoord = subframe.UVs[0].u;
@@ -525,10 +534,12 @@ bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned in
 	unsigned int northCoordInt = 255 - floor(northCoord * 255.0f + 0.5f);
 
 	std::vector<LevelAnimationSubframe> empty;
-	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt, southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), materialID, (subframe.subframeID + 1), empty);
+	int texPageReturnValue = goToTexPageAndApplyCLUT(subframe.texturePage, subframe.clutValue, leftCoordInt, rightCoordInt,
+        southCoordInt, northCoordInt, objectName, outputFolder, (textureID + 1), materialID, (subframe.subframeID + 1), empty);
 	if (texPageReturnValue != 0)
 	{
-		std::cerr << std::format("	Export Error: Object subframe texture {}-tex{}-{}.png failed to export", objectName, (textureID + 1), (subframe.subframeID + 1)) << std::endl;
+		std::cerr << std::format("	Export Error: Object subframe texture {}-tex{}-{}.png failed to export",
+            objectName, (textureID + 1), (subframe.subframeID + 1)) << std::endl;
 		return false;
 	}
 	return true;

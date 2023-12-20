@@ -16,6 +16,7 @@
 
 #include "png.h"
 
+#include "SharedFunctions.h"
 #include "TextureExporter.h"
 
 #include <filesystem>
@@ -66,7 +67,8 @@ bool resetModifiedVRAM()
 	return true;
 }
 
-int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short int yCoordinateDestination, unsigned short int xSize, unsigned short int ySize, unsigned short int xCoordinateSource, unsigned short int yCoordinateSource, bool useAlreadyModifiedVRAMAsBase)
+int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short int yCoordinateDestination, unsigned short int xSize, unsigned short int ySize,
+	unsigned short int xCoordinateSource, unsigned short int yCoordinateSource, bool useAlreadyModifiedVRAMAsBase)
 {
 	for (unsigned int y = 0; y < ySize; y++)
 	{
@@ -82,9 +84,11 @@ int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short
 	return 0;
 }
 
-int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right, unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex, unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes)
+int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right,
+	unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex,
+	unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes)
 {
-	//Initialise texture page
+	// Initialise texture page
 
 	int texturePageX = (texturePage << 6) & 0x07C0;
 	int texturePageY = (texturePage << 4) & 0x0100 + ((texturePage >> 2) & 0x0200);
@@ -116,6 +120,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 				colourLimit = 16;
 				unsigned short int val = 0;
 				wrappedWidth = (texturePageX + (x / 4)) % 512;
+
 				if ((texturePageY + y) < 512)
 					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
@@ -129,6 +134,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 				colourLimit = 256;
 				unsigned short int val = 0;
 				wrappedWidth = (texturePageX + (x / 2)) % 512;
+
 				if ((texturePageY + y) < 512)
 					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
@@ -140,6 +146,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 				colourLimit = 65536;
 				unsigned short int val = 0;
 				wrappedWidth = (texturePageX + x) % 512;
+
 				if ((texturePageY + y) < 512)
 					val = textureDataVRAMMovement[texturePageY + y][wrappedWidth];
 
@@ -150,8 +157,11 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 			{
 				for (unsigned int i = 0; i < levelSubframes.size(); i++)
 				{
-					if (!subframeCheckAlreadyDone[i] && wrappedWidth >= levelSubframes[i].xCoordinateDestination && wrappedWidth < (levelSubframes[i].xCoordinateDestination + levelSubframes[i].xSize)
-						&& (texturePageY + y) >= levelSubframes[i].yCoordinateDestination && (texturePageY + y) < (levelSubframes[i].yCoordinateDestination + levelSubframes[i].ySize))
+					if (!subframeCheckAlreadyDone[i]
+						&& wrappedWidth >= levelSubframes[i].xCoordinateDestination
+						&& wrappedWidth < (levelSubframes[i].xCoordinateDestination + levelSubframes[i].xSize)
+						&& (texturePageY + y) >= levelSubframes[i].yCoordinateDestination
+						&& (texturePageY + y) < (levelSubframes[i].yCoordinateDestination + levelSubframes[i].ySize))
 					{
 						levelSubframes[i].subframeExportsThis = true;
 						subframeCheckAlreadyDone[i] = true;
@@ -210,7 +220,8 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 	png_infop infoPointer = png_create_info_struct(pngPointer);
 	png_byte** rowPointers = NULL;
 
-	png_set_IHDR(pngPointer, infoPointer, (right - left + 1), (south - north + 1), 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(pngPointer, infoPointer, (right - left + 1), (south - north + 1), 8,
+		PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	rowPointers = static_cast<png_byte**>(png_malloc(pngPointer, (south - north + 1) * sizeof(png_byte*)));
 

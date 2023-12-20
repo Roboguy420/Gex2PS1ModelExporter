@@ -36,4 +36,15 @@ inline char directorySeparator()
 }
 
 float rgbToLinearRgb(unsigned char colour);
+
 std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen);
+
+int stringToInt(std::string inputString, int failValue);
+
+std::string getFileNameWithoutExtension(std::string fileName, bool includePath);
+
+unsigned int oneOrZero(auto number, auto threshold);
+
+unsigned int getMostDifferentIndexOfThree(auto element1, auto element2, auto element3);
+
+unsigned int getMinOrMaxIndexOfThree(auto element1, auto element2, auto element3, bool min);

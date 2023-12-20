@@ -94,3 +94,97 @@ std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen)
 
 	return std::format("{}.{}", leftOfDecimal, rightOfDecimal);
 }
+
+int stringToInt(std::string inputString, int failValue)
+{
+	for (int i = 0; i < inputString.length(); i++)
+	{
+		if (i == 0 && inputString[i] == '-')
+			continue;
+		if (!isdigit(inputString[i]))
+			return failValue;
+	}
+	return atoi(inputString.c_str());
+}
+
+std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
+{
+	size_t parentDirEnd = fileName.find_last_of(directorySeparator());
+	std::string filePath;
+	if (parentDirEnd != std::string::npos)
+	{
+		filePath = fileName.substr(0, parentDirEnd + 1);
+		fileName = fileName.substr(parentDirEnd + 1);
+	}
+	size_t extensionStart = fileName.find_last_of('.');
+	if (extensionStart == std::string::npos)
+	{
+		return fileName; //Simply returns the filename if there is no extension
+	}
+	if (includePath)
+	{
+		return filePath + fileName.substr(0, extensionStart);
+	}
+	return fileName.substr(0, extensionStart);
+}
+
+unsigned int oneOrZero(auto number, auto threshold)
+{
+	//If the number is greather than the threshold, return one
+	//If the number is less than the threshold, return zero
+	if (number > threshold)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+unsigned int getMostDifferentIndexOfThree(auto element1, auto element2, auto element3)
+{
+	if (abs(element1 - element2) >= abs(element2 - element3) && abs(element1 - element3) >= abs(element2 - element3))
+	{
+		return 0;
+	}
+	else if (abs(element2 - element1) >= abs(element1 - element3) && abs(element2 - element3) >= abs(element1 - element3))
+	{
+		return 1;
+	}
+	else
+	{
+		return 2;
+	}
+}
+
+unsigned int getMinOrMaxIndexOfThree(auto element1, auto element2, auto element3, bool min)
+{
+	if (!min)
+	{
+		if (element1 >= element2 && element1 >= element3)
+		{
+			return 0;
+		}
+		else if (element2 >= element1 && element2 >= element3)
+		{
+			return 1;
+		}
+		else
+		{
+			return 2;
+		}
+	}
+	else
+	{
+		if (element1 <= element2 && element1 <= element3)
+		{
+			return 0;
+		}
+		else if (element2 <= element1 && element2 <= element3)
+		{
+			return 1;
+		}
+		else
+		{
+			return 2;
+		}
+	}
+}

@@ -18,7 +18,8 @@
 
 #include "VerticesInterpreter.h"
 
-void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
+void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+    unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
 
@@ -118,7 +119,8 @@ void readArmature(std::ifstream &reader, unsigned short int boneCount, unsigned 
 	}
 }
 
-void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
+void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+    unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0 || boneStartAddress == 0 || boneCount == 0) { return; }
 
