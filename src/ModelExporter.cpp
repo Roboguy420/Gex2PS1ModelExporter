@@ -25,6 +25,7 @@
 #include "XMLExport.h"
 #include "Constants.h"
 
+#include <format>
 #include <filesystem>
 #include <vector>
 #include <math.h>
