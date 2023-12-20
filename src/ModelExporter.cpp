@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 			case 'i':
 				if ((selectedModelExport = stringToInt(optarg, -2)) < -1)
 				{
-					std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number] [-l --list]", argv[0]) << std::endl;
+					std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
 					std::cerr << std::format("Error {}: Selected model index is invalid", EXIT_INDEX_FAILED_PARSE) << std::endl;
 					return EXIT_INDEX_FAILED_PARSE;
 				}
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 				listNamesBool = true;
 				break;
 			default:
-				std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number] [-l --list]", argv[0]) << std::endl;
+				std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
 				std::cerr << std::format("Error {}: Arguments not formatted properly", EXIT_BAD_ARGS) << std::endl;
 				return EXIT_BAD_ARGS;
 		}
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 		inputFile = argv[optind];
 	else
 	{
-		std::cerr << std::format("Usage: {} file [-o --out folder] [-i --index number] [-l --list]", argv[0]) << std::endl;
+		std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
 		std::cerr << std::format("Error {}: Need at least the input file to work", EXIT_INSUFFICIENT_ARGS) << std::endl;
 		return EXIT_INSUFFICIENT_ARGS;
 	}
