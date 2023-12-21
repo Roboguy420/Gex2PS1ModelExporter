@@ -185,8 +185,13 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		reader.seekg(modelsAddressesStart, reader.beg);
 
 		if (listNamesBool)
+		{
 			// Break out of sequence entirely, only list names, do not export any models afterwards
-			return listNames(reader, modelsAddressesStart);
+			int listNamesReturn = listNames(reader, modelsAddressesStart);
+			reader.close();
+			std::remove("Gex2PS1ModelExporterTempfile.drm");
+			return listNamesReturn;
+		}
 	}
 	catch (std::ifstream::failure &e)
 	{
