@@ -124,6 +124,9 @@ int main(int argc, char* argv[])
 		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
 		return EXIT_END_OF_STREAM;
 	}
+
+	if (listNamesBool)
+		return EXIT_SUCCESSFUL_EXPORT;
 	
 	if (!atLeastOneExportedSuccessfully)
 	{
