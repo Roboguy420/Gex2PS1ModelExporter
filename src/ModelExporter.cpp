@@ -31,6 +31,8 @@
 #include <math.h>
 #include <getopt.h>
 
+std::string tempFile = std::format("{}{}Gex2PS1ModelExporterTempfile.drm", tempDirectory(), directorySeparator());
+
 int main(int argc, char* argv[])
 {
 	std::string inputFile;
@@ -165,7 +167,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		size_t filesize = reader.tellg();
 		reader.seekg(bitshift, reader.beg);
 	
-		std::ofstream tempWriter("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+		std::ofstream tempWriter(tempFile.c_str(), std::ifstream::binary);
 
 		while (reader.tellg() < filesize)
 		{
@@ -176,7 +178,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		tempWriter.close();
 
 		reader.close();
-		reader.open("Gex2PS1ModelExporterTempfile.drm", std::ifstream::binary);
+		reader.open(tempFile.c_str(), std::ifstream::binary);
 
 		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
 
@@ -189,7 +191,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 			// Break out of sequence entirely, only list names, do not export any models afterwards
 			int listNamesReturn = listNames(reader, modelsAddressesStart);
 			reader.close();
-			std::remove("Gex2PS1ModelExporterTempfile.drm");
+			std::remove(tempFile.c_str());
 			return listNamesReturn;
 		}
 	}
@@ -197,7 +199,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 	{
 		// End of stream exception
 		reader.close();
-		std::remove("Gex2PS1ModelExporterTempfile.drm");
+		std::remove(tempFile.c_str());
 		return 1;
 	}
 
@@ -222,7 +224,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		{
 			// End of stream exception
 			reader.close();
-			std::remove("Gex2PS1ModelExporterTempfile.drm");
+			std::remove(tempFile.c_str());
 			return 1;
 		}
 
@@ -345,7 +347,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		}
 	}
 	reader.close();
-	std::remove("Gex2PS1ModelExporterTempfile.drm");
+	std::remove(tempFile.c_str());
 
 	return 0;
 }

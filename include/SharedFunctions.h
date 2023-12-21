@@ -35,6 +35,18 @@ inline char directorySeparator()
 #endif
 }
 
+inline std::string tempDirectory()
+{
+#ifdef _WIN32
+    if (std::getenv("TEMP") != NULL)
+        return std::getenv("TEMP");
+    else
+        return ".";
+#else
+    return "/tmp";
+#endif
+}
+
 float rgbToLinearRgb(unsigned char colour);
 
 std::string divideByAPowerOfTen(int inputNumber, unsigned int powerOfTen);

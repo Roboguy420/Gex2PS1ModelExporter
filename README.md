@@ -172,7 +172,7 @@ The source code aims to be as OS and compiler agnostic as possible. The official
 ## Additional Notes
 These are some other things that are important to keep in mind when using the program.
 * Due to its small scale and lack of wide usage, the program is relatively untested. Use caution when selecting the import file. Only try to export models from files that you know are from a properly dumped version of the game.
-* During reading of an imported .drm file, the program will create a temporary file named "Gex2PS1ModelExporterTempfile.drm" in the current working directory. If the program halts prematurely, this file may still persist in that directory, so make sure to keep a note of it and delete it if it still exists after the program has closed.
+* During reading of an imported .drm file, the program will create a temporary file named "Gex2PS1ModelExporterTempfile.drm" in either the temp directory, or if its environment variable doesn't exist, the current working directory. If the program halts prematurely, this file may still persist in that directory, so make sure to keep a note of it and delete it if it still exists after the program has closed.
 
 ## Credits
 * Crystal Dynamics for their amazing game
