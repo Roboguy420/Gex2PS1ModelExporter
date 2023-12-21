@@ -119,8 +119,8 @@ int exportToXML(std::string outputFolder, std::string objectName, std::vector<Po
 
 	if (std::filesystem::exists(outputFolder))
 	{
-		outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str());
-		return returnValue;
+        if (outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str()) == 0)
+		    return returnValue;
 	}
 
 	// Could not export

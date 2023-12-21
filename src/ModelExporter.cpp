@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 	std::ifstream reader(inputFile, std::ifstream::binary);
 	reader.exceptions(std::ifstream::eofbit);
 
-	if (!reader)
+	if (!reader.is_open())
 	{
 		std::cerr << std::format("Error {}: Failed to read input file", EXIT_INPUT_FAILED_READ) << std::endl;
 		return EXIT_INPUT_FAILED_READ;
@@ -119,13 +119,24 @@ int main(int argc, char* argv[])
 	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
 
-	if (readFile(reader, inputFile, outputFolder, selectedModelExport, listNamesBool,
-		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully) == 1)
+
+	switch (readFile(reader, inputFile, outputFolder, selectedModelExport, listNamesBool,
+		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully))
 	{
-		// End of stream exception
-		std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
-		return EXIT_END_OF_STREAM;
+		case 1:
+			// End of stream exception
+			std::cerr << std::format("Error {}: End of stream exception", EXIT_END_OF_STREAM) << std::endl;
+			return EXIT_END_OF_STREAM;
+		case 2:
+			// Failed to write temp file to temp dir
+			std::cerr << std::format("Error {}: Failed to write tempfile", EXIT_TEMPFILE_FAILED_WRITE) << std::endl;
+			return EXIT_TEMPFILE_FAILED_WRITE;
+		case 3:
+			// Failed to read temp file
+			std::cerr << std::format("Error {}: Failed to read tempfile", EXIT_TEMPFILE_FAILED_READ) << std::endl;
+			return EXIT_TEMPFILE_FAILED_READ;
 	}
+	
 
 	if (listNamesBool)
 		return EXIT_SUCCESSFUL_EXPORT;
@@ -169,6 +180,9 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 	
 		std::ofstream tempWriter(tempFile.c_str(), std::ifstream::binary);
 
+		if (!tempWriter.is_open())
+			return 2;
+
 		while (reader.tellg() < filesize)
 		{
 			unsigned char data;
@@ -179,6 +193,9 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 
 		reader.close();
 		reader.open(tempFile.c_str(), std::ifstream::binary);
+
+		if (!reader.is_open())
+			return 3;
 
 		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
 

@@ -48,9 +48,11 @@ The return values are as follows:
 * **5:** Output folder in 2nd argument does not exist
 * **6:** 3rd argument is not a number -1 or higher
 * **7:** End of stream exception (usually the result of a corrupt or unusually formatted DRM file)
-* **8:** At least 1 texture failed to export
-* **9:** At least 1 successful export, others had failures
-* **10:** No successful exports, all attempts failed
+* **8:** Failed to write temporary file
+* **9:** Failed to read temporary file
+* **10:** At least 1 texture failed to export
+* **11:** At least 1 successful export, others had failures
+* **12:** No successful exports, all attempts failed
 
 ## Compilation & Building - Windows
 This program requires:
