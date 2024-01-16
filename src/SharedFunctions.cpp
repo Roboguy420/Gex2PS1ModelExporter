@@ -110,7 +110,19 @@ int stringToInt(std::string inputString, int failValue)
 
 std::string getFileNameWithoutExtension(std::string fileName, bool includePath)
 {
-	size_t parentDirEnd = fileName.find_last_of(directorySeparator());
+	size_t parentDirEnd = fileName.find_last_of('/');
+
+	#ifdef _WIN32
+		// If the program is on Windows, directories in an argument could have either backslashes or forward slashes
+		// This part of the program checks for the last backslash separator that it can find (if it exists) and stores its index
+		// It will then compare this index to the main parentDirEnd variable to check if it is further along
+		// If it is further along, then it sets the parentDirEnd variable to be the index of the last backslash
+		size_t parentDirEndBackslash = fileName.find_last_of('\\');
+		if (parentDirEndBackslash != std::string::npos
+		&& parentDirEndBackslash > parentDirEnd)
+			parentDirEnd = parentDirEndBackslash;
+	#endif
+
 	std::string filePath;
 	if (parentDirEnd != std::string::npos)
 	{
