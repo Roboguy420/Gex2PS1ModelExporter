@@ -1,6 +1,6 @@
 Name:           gex2ps1modelexporter
-Version:        6
-Release:        2
+Version:        7.0.2
+Release:        1
 Summary:        Command line program for exporting Gex 2 PS1 models
 
 License:        GPL 

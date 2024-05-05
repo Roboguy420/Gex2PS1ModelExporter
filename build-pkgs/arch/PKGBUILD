@@ -1,7 +1,7 @@
 # Maintainer: Roboguy420 <wahaller@proton.me>
 pkgname='gex2ps1modelexporter'
-pkgver=6
-pkgrel=3
+pkgver=7.0.2
+pkgrel=1
 epoch=
 pkgdesc="Command line program for exporting Gex 2 PS1 models"
 arch=('x86_64')

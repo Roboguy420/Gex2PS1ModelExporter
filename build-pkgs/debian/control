@@ -8,5 +8,5 @@ Rules-Requires-Root: no
 
 Package: gex2ps1modelexporter
 Architecture: amd64
-Depends: libpng16-16, libtinyxml2-9, libc-bin
+Depends: libpng16-16, libtinyxml2-10, libc-bin
 Description: Command line program for exporting Gex 2 PS1 models
