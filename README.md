@@ -169,7 +169,11 @@ Run the following command:
 If all has went well, gex2ps1modelexporter will be installed in the chosen installation folder with no errors.
 
 ## Compatibility
-The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, x86-64 Red Hat-based Linux, and AMD64 Debian GNU/Linux. They have been tested and found to be working on Windows 10 64-bit, Artix Linux, Fedora Linux x86-64, and Debian Sid (unstable Trixie as of writing) AMD64 respectively.
+The source code aims to be as OS and compiler agnostic as possible. The official releases are for 64-bit Windows, x86-64 Arch Linux, x86-64 Red Hat-based Linux, and AMD64 Debian GNU/Linux. They have been tested and found to be working on:
+* **Windows:** Windows 10 64-bit
+* **Arch:** Arch Linux, Artix Linux
+* **RPM:** Fedora Linux x86-64
+* **Debian:** Debian Sid (unstable Trixie as of writing) AMD64
 
 ## Additional Notes
 These are some other things that are important to keep in mind when using the program.
