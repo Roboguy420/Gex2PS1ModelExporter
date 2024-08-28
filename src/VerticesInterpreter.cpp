@@ -17,8 +17,9 @@
 #include <fstream>
 
 #include "VerticesInterpreter.h"
+#include "Globals.h"
 
-void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+void readVertices(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
     unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
@@ -28,7 +29,7 @@ void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigne
 	for (unsigned int v = 0; v < vertexCount; v++)
 	{
 		unsigned int uPolygonPosition = reader.tellg();
-		vertices.push_back(readVertex(reader, v));
+		vertices.push_back(readVertex(v));
 		reader.seekg(uPolygonPosition + 0xC, reader.beg);
 	}
 
@@ -36,13 +37,13 @@ void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigne
 	{
 		std::vector<Bone> bones;
 
-		readArmature(reader, boneCount, boneStartAddress, bones);
+		readArmature(boneCount, boneStartAddress, bones);
 
-		applyArmature(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
+		applyArmature(vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
 	}
 }
 
-Vertex readVertex(std::ifstream& reader, unsigned int v)
+Vertex readVertex(unsigned int v)
 {
 	Vertex thisVertex;
 
@@ -71,7 +72,7 @@ Vertex readVertex(std::ifstream& reader, unsigned int v)
 
 
 
-void readArmature(std::ifstream &reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones)
+void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones)
 {
 	if (boneStartAddress == 0 || boneCount == 0) { return; }
 
@@ -119,7 +120,7 @@ void readArmature(std::ifstream &reader, unsigned short int boneCount, unsigned 
 	}
 }
 
-void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+void applyArmature(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
     unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
 {
 	if (vertexStartAddress == 0 || vertexCount == 0 || boneStartAddress == 0 || boneCount == 0) { return; }

@@ -24,6 +24,7 @@ set(SOURCE_FILES_EXPORTER
   ${CMAKE_CURRENT_SOURCE_DIR}/src/VerticesInterpreter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/PolygonsInterpreter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelNamesLister.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Globals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/XMLExport.cpp
 )
 
@@ -37,6 +38,7 @@ set(HEADER_FILES_EXPORTER
   ${CMAKE_CURRENT_SOURCE_DIR}/include/PolygonsInterpreter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/ModelNamesLister.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/Constants.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/Globals.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLExport.h
 )
 

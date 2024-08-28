@@ -16,10 +16,11 @@
 
 #include "SharedFunctions.h"
 #include "Constants.h"
+#include "Globals.h"
 
 #include <filesystem>
 
-int listNames(std::ifstream& reader, unsigned int modelsAddressesStart)
+int listNames(unsigned int modelsAddressesStart)
 {
 	reader.seekg(modelsAddressesStart, reader.beg);
 

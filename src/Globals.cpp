@@ -1,4 +1,4 @@
-/*  Gex2PS1ModelExporter: Command line program for exporting Gex 2 PS1 models
+/*  Gex2PS1ModelExporter: Command line program for exporting Gex 2 PS1 models 
     Copyright (C) 2023  Roboguy420
 
     Gex2PS1ModelExporter is free software: you can redistribute it and/or modify
@@ -14,7 +14,10 @@
     You should have received a copy of the GNU General Public License
     along with Gex2PS1ModelExporter.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#pragma once
+#include "Globals.h"
 
-int listNames(unsigned int modelsAddressesStart);
+// Uninitialised (.bss)
 
+std::ifstream reader;
+
+// Initialised (.data)

@@ -11,6 +11,8 @@
 *.sln.docstates
 lib/*/
 .debug*
+compile_commands.json
+.editorconfig
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

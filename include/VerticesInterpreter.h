@@ -20,12 +20,12 @@
 
 #include <iostream>
 
-void readVertices(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+void readVertices(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
     unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
 
-Vertex readVertex(std::ifstream& reader, unsigned int v);
+Vertex readVertex(unsigned int v);
 
-void readArmature(std::ifstream& reader, unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
+void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
 
-void applyArmature(std::ifstream& reader, unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
+void applyArmature(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
     unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);

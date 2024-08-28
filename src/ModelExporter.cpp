@@ -23,6 +23,7 @@
 #include "VerticesInterpreter.h"
 #include "PolygonsInterpreter.h"
 #include "XMLExport.h"
+#include "Globals.h"
 #include "Constants.h"
 
 #include <format>
@@ -96,7 +97,7 @@ int main(int argc, char* argv[])
 		return EXIT_INPUT_NOT_FOUND;
 	}
 
-	std::ifstream reader(inputFile, std::ifstream::binary);
+	reader = std::ifstream(inputFile, std::ifstream::binary);
 	reader.exceptions(std::ifstream::eofbit);
 
 	if (!reader.is_open())
@@ -120,7 +121,7 @@ int main(int argc, char* argv[])
 	bool atLeastOneExportedSuccessfully = false;
 
 
-	switch (readFile(reader, inputFile, outputFolder, selectedModelExport, listNamesBool,
+	switch (readFile(inputFile, outputFolder, selectedModelExport, listNamesBool,
 		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully))
 	{
 		case 1:
@@ -163,7 +164,7 @@ int main(int argc, char* argv[])
 
 
 
-int readFile(std::ifstream& reader, std::string inputFile, std::string outputFolder, int selectedModelExport, bool listNamesBool,
+int readFile(std::string inputFile, std::string outputFolder, int selectedModelExport, bool listNamesBool,
 	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully)
 {
 	unsigned int modelsAddressesStart;
@@ -206,7 +207,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 		if (listNamesBool)
 		{
 			// Break out of sequence entirely, only list names, do not export any models afterwards
-			int listNamesReturn = listNames(reader, modelsAddressesStart);
+			int listNamesReturn = listNames(modelsAddressesStart);
 			reader.close();
 			std::remove(tempFile.c_str());
 			return listNamesReturn;
@@ -300,7 +301,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 					std::cout << std::format("	Reading {}...", objectNameAndIndex) << std::endl;
 
 					reader.seekg(objectModelData, reader.beg);
-					objectReturnCode = convertObjToDAE(reader, outputFolder, objectNameAndIndex, inputFile);
+					objectReturnCode = convertObjToDAE(outputFolder, objectNameAndIndex, inputFile);
 				}
 				catch (std::ifstream::failure &e)
 				{
@@ -338,7 +339,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 			reader.read((char*)&levelData, sizeof(levelData));
 			reader.seekg(levelData, reader.beg);
 
-			levelReturnCode = convertLevelToDAE(reader, outputFolder, inputFile);
+			levelReturnCode = convertLevelToDAE(outputFolder, inputFile);
 		}
 		catch(std::ifstream::failure &e)
 		{
@@ -372,7 +373,7 @@ int readFile(std::ifstream& reader, std::string inputFile, std::string outputFol
 
 
 
-int convertObjToDAE(std::ifstream& reader, std::string outputFolder, std::string objectName, std::string inputFile)
+int convertObjToDAE(std::string outputFolder, std::string objectName, std::string inputFile)
 {
 	unsigned short int vertexCount;
 	unsigned int vertexStartAddress;
@@ -396,21 +397,21 @@ int convertObjToDAE(std::ifstream& reader, std::string outputFolder, std::string
 
 	std::vector<Vertex> vertices;
 
-	readVertices(reader, vertexCount, vertexStartAddress, boneCount, boneStartAddress, true, vertices);
+	readVertices(vertexCount, vertexStartAddress, boneCount, boneStartAddress, true, vertices);
 
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
 
 	std::filesystem::create_directory(outputFolder);
 
-	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, textureAnimationsStartAddress, true, polygons, materials, vertices);
+	readPolygons(objectName, outputFolder, polygonCount, polygonStartAddress, textureAnimationsStartAddress, true, polygons, materials, vertices);
 
 	int exportReturn = exportToXML(outputFolder, objectName, polygons, materials);
 
 	return exportReturn;
 }
 
-int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::string inputFile)
+int convertLevelToDAE(std::string outputFolder, std::string inputFile)
 {
 	std::string objectName = getFileNameWithoutExtension(inputFile, false);
 	unsigned int BSPTreeStartAddress;
@@ -434,7 +435,7 @@ int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::stri
 
 	std::vector<Vertex> vertices;
 
-	readVertices(reader, vertexCount, vertexStartAddress, NULL, NULL, false, vertices);
+	readVertices(vertexCount, vertexStartAddress, NULL, NULL, false, vertices);
 
 	// Read vertex colours
 
@@ -443,7 +444,7 @@ int convertLevelToDAE(std::ifstream& reader, std::string outputFolder, std::stri
 
 	std::filesystem::create_directory(outputFolder);
 
-	readPolygons(reader, objectName, outputFolder, polygonCount, polygonStartAddress, materialStartAddress, false, polygons, materials, vertices);
+	readPolygons(objectName, outputFolder, polygonCount, polygonStartAddress, materialStartAddress, false, polygons, materials, vertices);
 
 	int exportReturn = exportToXML(outputFolder, objectName, polygons, materials);
 
