@@ -39,7 +39,7 @@ void readVertices(unsigned short int vertexCount, unsigned int vertexStartAddres
 
 		readArmature(boneCount, boneStartAddress, bones);
 
-		applyArmature(vertexCount, vertexStartAddress, boneCount, boneStartAddress, vertices, bones);
+		applyArmature(boneCount, vertices, bones);
 	}
 }
 
@@ -120,11 +120,9 @@ void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, s
 	}
 }
 
-void applyArmature(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
-    unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones)
+void applyArmature(unsigned short int boneCount,
+    std::vector<Vertex>& vertices, std::vector<Bone>& bones)
 {
-	if (vertexStartAddress == 0 || vertexCount == 0 || boneStartAddress == 0 || boneCount == 0) { return; }
-
 	for (unsigned short int b = 0; b < boneCount; b++)
 	{
 		if (bones[b].vFirst != 0xFFFF && bones[b].vLast != 0xFFFF)

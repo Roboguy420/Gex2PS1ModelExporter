@@ -16,7 +16,10 @@
 
 #pragma once
 
+#include "ModelStructs.h"
+
 #include <fstream>
+#include <map>
 
 // Uninitialised (.bss)
 
@@ -24,6 +27,8 @@ extern std::ifstream g_reader;
 
 extern std::string g_outputFolder;
 extern std::string g_inputFile;
+
+extern std::string g_tempFile;
 
 // Initialised (.data)
 
@@ -34,4 +39,5 @@ extern bool g_atLeastOneExportedSuccessfully;
 extern bool g_listNames;
 
 extern int g_selectedModelExport;
+extern std::map<unsigned int, Material> g_materialsMap;
 

@@ -25,5 +25,5 @@ Vertex readVertex(unsigned int v);
 
 void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, std::vector<Bone>& bones);
 
-void applyArmature(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
-    unsigned int boneStartAddress, std::vector<Vertex>& vertices, std::vector<Bone>& bones);
+void applyArmature(unsigned short int boneCount,
+    std::vector<Vertex>& vertices, std::vector<Bone>& bones);

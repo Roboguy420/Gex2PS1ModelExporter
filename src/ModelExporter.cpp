@@ -33,10 +33,9 @@
 #include <math.h>
 #include <getopt.h>
 
-std::string tempFile = std::format("{}{}Gex2PS1ModelExporterTempfile.drm", tempDirectory(), directorySeparator());
-
 int main(int argc, char* argv[])
 {
+	g_tempFile = std::format("{}{}Gex2PS1ModelExporterTempfile.drm", tempDirectory(), directorySeparator());
 	g_outputFolder = std::filesystem::current_path().string();
 
 	// Selected export -1 = everything
@@ -168,7 +167,7 @@ int readFile()
 		size_t filesize = g_reader.tellg();
 		g_reader.seekg(bitshift, g_reader.beg);
 	
-		std::ofstream tempWriter(tempFile.c_str(), std::ifstream::binary);
+		std::ofstream tempWriter(g_tempFile.c_str(), std::ifstream::binary);
 
 		if (!tempWriter.is_open())
 			return 2;
@@ -182,7 +181,7 @@ int readFile()
 		tempWriter.close();
 
 		g_reader.close();
-		g_reader.open(tempFile.c_str(), std::ifstream::binary);
+		g_reader.open(g_tempFile.c_str(), std::ifstream::binary);
 
 		if (!g_reader.is_open())
 			return 3;
@@ -198,7 +197,7 @@ int readFile()
 			// Break out of sequence entirely, only list names, do not export any models afterwards
 			int listNamesReturn = listNames(modelsAddressesStart);
 			g_reader.close();
-			std::remove(tempFile.c_str());
+			std::remove(g_tempFile.c_str());
 			return listNamesReturn;
 		}
 	}
@@ -206,7 +205,7 @@ int readFile()
 	{
 		// End of stream exception
 		g_reader.close();
-		std::remove(tempFile.c_str());
+		std::remove(g_tempFile.c_str());
 		return 1;
 	}
 
@@ -231,7 +230,7 @@ int readFile()
 		{
 			// End of stream exception
 			g_reader.close();
-			std::remove(tempFile.c_str());
+			std::remove(g_tempFile.c_str());
 			return 1;
 		}
 
@@ -354,7 +353,7 @@ int readFile()
 		}
 	}
 	g_reader.close();
-	std::remove(tempFile.c_str());
+	std::remove(g_tempFile.c_str());
 
 	return 0;
 }

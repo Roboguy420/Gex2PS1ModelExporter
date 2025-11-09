@@ -355,8 +355,15 @@ void readObjectPolygon(PolygonStruct& thisPolygon, Material& thisMaterial, bool&
 		thisPolygon.uv3.u = u[2] / 255.0f;
 		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
 
+		if (g_materialsMap.contains(materialAddress))
+		{
+			thisMaterial = g_materialsMap[materialAddress];
+			return;
+		}
+
 		g_reader.seekg(materialAddress, g_reader.beg);
 		thisMaterial = readMaterial();
+		g_materialsMap[materialAddress] = thisMaterial;
 	}
 	else
 	{
@@ -377,6 +384,8 @@ void readLevelPolygon(PolygonStruct& thisPolygon, Material& thisMaterial, bool& 
 	g_reader.seekg(0x8, g_reader.cur);
 
 	g_reader.read((char*)&materialAddress, sizeof(materialAddress));
+
+
 
 	// 0x02 = Animated texture flag
 	// 0x80 = Invisible texture flag
@@ -402,8 +411,15 @@ void readLevelPolygon(PolygonStruct& thisPolygon, Material& thisMaterial, bool& 
 		thisPolygon.uv3.u = u[2] / 255.0f;
 		thisPolygon.uv3.v = (255 - v[2]) / 255.0f;
 
+	  if (g_materialsMap.contains(materialAddress))
+	  {
+		  thisMaterial = g_materialsMap[materialAddress];
+		  return;
+	  }
+
 		g_reader.seekg(materialAddress, g_reader.beg);
 		thisMaterial = readMaterial();
+		g_materialsMap[materialAddress] = thisMaterial;
 	}
 	else
 		realMaterial = false;

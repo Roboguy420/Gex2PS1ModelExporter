@@ -23,6 +23,8 @@ std::ifstream g_reader;
 std::string g_outputFolder;
 std::string g_inputFile;
 
+std::string g_tempFile;
+
 // Initialised (.data)
 
 bool g_modelFailedToExport = false;
@@ -32,4 +34,6 @@ bool g_atLeastOneExportedSuccessfully = false;
 bool g_listNames = false;
 
 int g_selectedModelExport = -1;
+
+std::map<unsigned int, Material> g_materialsMap = std::map<unsigned int, Material>();
 
