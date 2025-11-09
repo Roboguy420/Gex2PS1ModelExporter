@@ -1,11 +1,12 @@
 #include "XMLExport.h"
 #include "SharedFunctions.h"
+#include "Globals.h"
 
 #include <format>
 #include <string>
 #include <filesystem>
 
-int exportToXML(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials)
+int exportToXML(std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials)
 {
     // This stuff is mostly just interfacing with tinyxml2, not really too much to say here
 
@@ -117,9 +118,9 @@ int exportToXML(std::string outputFolder, std::string objectName, std::vector<Po
 
 	outputDAE.LinkEndChild(rootNode);
 
-	if (std::filesystem::exists(outputFolder))
+	if (std::filesystem::exists(g_outputFolder))
 	{
-        if (outputDAE.SaveFile(std::format("{}{}{}.dae", outputFolder, directorySeparator(), objectName).c_str()) == 0)
+        if (outputDAE.SaveFile(std::format("{}{}{}.dae", g_outputFolder, directorySeparator(), objectName).c_str()) == 0)
 		    return returnValue;
 	}
 

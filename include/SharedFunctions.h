@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
+#include <string>
 
 #ifdef _WIN32
 	#include <direct.h>

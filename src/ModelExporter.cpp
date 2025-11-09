@@ -29,6 +29,7 @@
 #include <format>
 #include <filesystem>
 #include <vector>
+#include <iostream>
 #include <math.h>
 #include <getopt.h>
 
@@ -36,8 +37,7 @@ std::string tempFile = std::format("{}{}Gex2PS1ModelExporterTempfile.drm", tempD
 
 int main(int argc, char* argv[])
 {
-	std::string inputFile;
-	std::string outputFolder = std::filesystem::current_path().string();
+	g_outputFolder = std::filesystem::current_path().string();
 
 	// Selected export -1 = everything
 	// Selected export 0 = level geometry
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 		switch (opt)
 		{
 			case 'o':
-				outputFolder = optarg;
+				g_outputFolder = optarg;
 				break;
 			case 'i':
 				if ((selectedModelExport = stringToInt(optarg, -2)) < -1)
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
 
 	if (optind < argc)
-		inputFile = argv[optind];
+		g_inputFile = argv[optind];
 	else
 	{
 		std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
@@ -90,38 +90,38 @@ int main(int argc, char* argv[])
 		return EXIT_INSUFFICIENT_ARGS;
 	}
 
-	if (!std::filesystem::exists(inputFile))
+	if (!std::filesystem::exists(g_inputFile))
 	{
 		// Input file doesn't exist
 		std::cerr << std::format("Error {}: Input file does not exist", EXIT_INPUT_NOT_FOUND) << std::endl;
 		return EXIT_INPUT_NOT_FOUND;
 	}
 
-	reader = std::ifstream(inputFile, std::ifstream::binary);
-	reader.exceptions(std::ifstream::eofbit);
+	g_reader = std::ifstream(g_inputFile, std::ifstream::binary);
+	g_reader.exceptions(std::ifstream::eofbit);
 
-	if (!reader.is_open())
+	if (!g_reader.is_open())
 	{
 		std::cerr << std::format("Error {}: Failed to read input file", EXIT_INPUT_FAILED_READ) << std::endl;
 		return EXIT_INPUT_FAILED_READ;
 	}
 
 
-	if (!std::filesystem::is_directory(outputFolder))
+	if (!std::filesystem::is_directory(g_outputFolder))
 	{
 		// Failed to access output folder
 		std::cerr << std::format("Error {}: Output directory does not exist", EXIT_OUTPUT_NOT_FOUND) << std::endl;
 		return EXIT_OUTPUT_NOT_FOUND;
 	}
 
-	outputFolder = outputFolder + directorySeparator() + getFileNameWithoutExtension(inputFile, false);
+	g_outputFolder = g_outputFolder + directorySeparator() + getFileNameWithoutExtension(g_inputFile, false);
 
 	bool modelFailedToExport = false;
 	bool textureFailedToExport = false;
 	bool atLeastOneExportedSuccessfully = false;
 
 
-	switch (readFile(inputFile, outputFolder, selectedModelExport, listNamesBool,
+	switch (readFile(selectedModelExport, listNamesBool,
 		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully))
 	{
 		case 1:
@@ -164,51 +164,51 @@ int main(int argc, char* argv[])
 
 
 
-int readFile(std::string inputFile, std::string outputFolder, int selectedModelExport, bool listNamesBool,
+int readFile(int selectedModelExport, bool listNamesBool,
 	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully)
 {
 	unsigned int modelsAddressesStart;
 
 	try
 	{
-		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(inputFile, true)));
+		initialiseVRM(std::format("{}.vrm", getFileNameWithoutExtension(g_inputFile, true)));
 		unsigned int bitshift;
-		reader.read((char*)&bitshift, sizeof(bitshift));
+		g_reader.read((char*)&bitshift, sizeof(bitshift));
 		bitshift = ((bitshift >> 9) << 11) + 0x800;
-		reader.seekg(0, reader.end);
-		size_t filesize = reader.tellg();
-		reader.seekg(bitshift, reader.beg);
+		g_reader.seekg(0, g_reader.end);
+		size_t filesize = g_reader.tellg();
+		g_reader.seekg(bitshift, g_reader.beg);
 	
 		std::ofstream tempWriter(tempFile.c_str(), std::ifstream::binary);
 
 		if (!tempWriter.is_open())
 			return 2;
 
-		while (reader.tellg() < filesize)
+		while (g_reader.tellg() < filesize)
 		{
 			unsigned char data;
-			reader.read((char*)&data, sizeof(data));
+			g_reader.read((char*)&data, sizeof(data));
 			tempWriter << data;
 		}
 		tempWriter.close();
 
-		reader.close();
-		reader.open(tempFile.c_str(), std::ifstream::binary);
+		g_reader.close();
+		g_reader.open(tempFile.c_str(), std::ifstream::binary);
 
-		if (!reader.is_open())
+		if (!g_reader.is_open())
 			return 3;
 
-		std::cout << std::format("Reading from {}...", inputFile) << std::endl;
+		std::cout << std::format("Reading from {}...", g_inputFile) << std::endl;
 
-		reader.seekg(0x3C, reader.beg);
-		reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
-		reader.seekg(modelsAddressesStart, reader.beg);
+		g_reader.seekg(0x3C, g_reader.beg);
+		g_reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
+		g_reader.seekg(modelsAddressesStart, g_reader.beg);
 
 		if (listNamesBool)
 		{
 			// Break out of sequence entirely, only list names, do not export any models afterwards
 			int listNamesReturn = listNames(modelsAddressesStart);
-			reader.close();
+			g_reader.close();
 			std::remove(tempFile.c_str());
 			return listNamesReturn;
 		}
@@ -216,7 +216,7 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 	catch (std::ifstream::failure &e)
 	{
 		// End of stream exception
-		reader.close();
+		g_reader.close();
 		std::remove(tempFile.c_str());
 		return 1;
 	}
@@ -229,19 +229,19 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 		long int nextPos;
 		try
 		{
-			reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
+			g_reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
 
 			if (specificObjectAddress == modelsAddressesStart)
 				break;
 
 			objIndex++;
 
-			nextPos = reader.tellg();
+			nextPos = g_reader.tellg();
 		}
 		catch (std::ifstream::failure &e)
 		{
 			// End of stream exception
-			reader.close();
+			g_reader.close();
 			std::remove(tempFile.c_str());
 			return 1;
 		}
@@ -257,25 +257,25 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 
 			try
 			{
-				reader.seekg(specificObjectAddress + 0x24, reader.beg);
+				g_reader.seekg(specificObjectAddress + 0x24, g_reader.beg);
 				unsigned int objNameAddr;
-				reader.read((char*)&objNameAddr, sizeof(objNameAddr));
-				reader.seekg(objNameAddr, reader.beg);
+				g_reader.read((char*)&objNameAddr, sizeof(objNameAddr));
+				g_reader.seekg(objNameAddr, g_reader.beg);
 				for (int i = 0; i < 8; i++)
 				{
 					char objNameChar;
-					reader.read((char*)&objNameChar, 1);
+					g_reader.read((char*)&objNameChar, 1);
 					objName += objNameChar;
 				}
 
-				reader.seekg(specificObjectAddress + 0x8, reader.beg);
-				reader.read((char*)&objectCount, sizeof(objectCount));
-				reader.seekg(2, reader.cur);
-				reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
+				g_reader.seekg(specificObjectAddress + 0x8, g_reader.beg);
+				g_reader.read((char*)&objectCount, sizeof(objectCount));
+				g_reader.seekg(2, g_reader.cur);
+				g_reader.read((char*)&objectStartAddress, sizeof(objectStartAddress));
 			}
 			catch (std::ifstream::failure &e)
 			{
-				reader.seekg(nextPos, reader.beg);
+				g_reader.seekg(nextPos, g_reader.beg);
 				std::cerr << std::format("Read Error: Error reading metadata of the model at index {}", objIndex) << std::endl;
 				continue;
 			}
@@ -294,14 +294,14 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 
 				try
 				{
-					reader.seekg(objectStartAddress + (i * 4), reader.beg);
+					g_reader.seekg(objectStartAddress + (i * 4), g_reader.beg);
 					unsigned int objectModelData;
-					reader.read((char*)&objectModelData, sizeof(objectModelData));
+					g_reader.read((char*)&objectModelData, sizeof(objectModelData));
 
 					std::cout << std::format("	Reading {}...", objectNameAndIndex) << std::endl;
 
-					reader.seekg(objectModelData, reader.beg);
-					objectReturnCode = convertObjToDAE(outputFolder, objectNameAndIndex, inputFile);
+					g_reader.seekg(objectModelData, g_reader.beg);
+					objectReturnCode = convertObjToDAE(objectNameAndIndex);
 				}
 				catch (std::ifstream::failure &e)
 				{
@@ -326,20 +326,20 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 			if (objIndex == selectedModelExport) { break; }
 		}
 
-		reader.seekg(nextPos, reader.beg);
+		g_reader.seekg(nextPos, g_reader.beg);
 	}
 	if (selectedModelExport < 1)
 	{
 		int levelReturnCode;
-		std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+		std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
 		try
 		{
-			reader.seekg(0, reader.beg);
+			g_reader.seekg(0, g_reader.beg);
 			unsigned int levelData;
-			reader.read((char*)&levelData, sizeof(levelData));
-			reader.seekg(levelData, reader.beg);
+			g_reader.read((char*)&levelData, sizeof(levelData));
+			g_reader.seekg(levelData, g_reader.beg);
 
-			levelReturnCode = convertLevelToDAE(outputFolder, inputFile);
+			levelReturnCode = convertLevelToDAE();
 		}
 		catch(std::ifstream::failure &e)
 		{
@@ -355,16 +355,16 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 		if (levelReturnCode == 2)
 		{
 			// Model failed to export
-			std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+			std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
 			modelFailedToExport = true;
 		}
 		else
 		{
 			atLeastOneExportedSuccessfully = true;
-			std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(inputFile, false)) << std::endl;
+			std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
 		}
 	}
-	reader.close();
+	g_reader.close();
 	std::remove(tempFile.c_str());
 
 	return 0;
@@ -373,7 +373,7 @@ int readFile(std::string inputFile, std::string outputFolder, int selectedModelE
 
 
 
-int convertObjToDAE(std::string outputFolder, std::string objectName, std::string inputFile)
+int convertObjToDAE(std::string objectName)
 {
 	unsigned short int vertexCount;
 	unsigned int vertexStartAddress;
@@ -383,17 +383,17 @@ int convertObjToDAE(std::string outputFolder, std::string objectName, std::strin
 	unsigned int boneStartAddress;
 	unsigned int textureAnimationsStartAddress;
 
-	reader.read((char*)&vertexCount, sizeof(vertexCount));
-	reader.seekg(2, reader.cur);
-	reader.read((char*)&vertexStartAddress, sizeof(vertexStartAddress));
-	reader.seekg(8, reader.cur);
-	reader.read((char*)&polygonCount, sizeof(polygonCount));
-	reader.seekg(2, reader.cur);
-	reader.read((char*)&polygonStartAddress, sizeof(polygonStartAddress));
-	reader.read((char*)&boneCount, sizeof(boneCount));
-	reader.seekg(2, reader.cur);
-	reader.read((char*)&boneStartAddress, sizeof(boneStartAddress));
-	reader.read((char*)&textureAnimationsStartAddress, sizeof(textureAnimationsStartAddress));
+	g_reader.read((char*)&vertexCount, sizeof(vertexCount));
+	g_reader.seekg(2, g_reader.cur);
+	g_reader.read((char*)&vertexStartAddress, sizeof(vertexStartAddress));
+	g_reader.seekg(8, g_reader.cur);
+	g_reader.read((char*)&polygonCount, sizeof(polygonCount));
+	g_reader.seekg(2, g_reader.cur);
+	g_reader.read((char*)&polygonStartAddress, sizeof(polygonStartAddress));
+	g_reader.read((char*)&boneCount, sizeof(boneCount));
+	g_reader.seekg(2, g_reader.cur);
+	g_reader.read((char*)&boneStartAddress, sizeof(boneStartAddress));
+	g_reader.read((char*)&textureAnimationsStartAddress, sizeof(textureAnimationsStartAddress));
 
 	std::vector<Vertex> vertices;
 
@@ -402,18 +402,18 @@ int convertObjToDAE(std::string outputFolder, std::string objectName, std::strin
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
 
-	std::filesystem::create_directory(outputFolder);
+	std::filesystem::create_directory(g_outputFolder);
 
-	readPolygons(objectName, outputFolder, polygonCount, polygonStartAddress, textureAnimationsStartAddress, true, polygons, materials, vertices);
+	readPolygons(objectName, polygonCount, polygonStartAddress, textureAnimationsStartAddress, true, polygons, materials, vertices);
 
-	int exportReturn = exportToXML(outputFolder, objectName, polygons, materials);
+	int exportReturn = exportToXML(objectName, polygons, materials);
 
 	return exportReturn;
 }
 
-int convertLevelToDAE(std::string outputFolder, std::string inputFile)
+int convertLevelToDAE()
 {
-	std::string objectName = getFileNameWithoutExtension(inputFile, false);
+	std::string objectName = getFileNameWithoutExtension(g_inputFile, false);
 	unsigned int BSPTreeStartAddress;
 	unsigned int vertexCount;
 	unsigned int polygonCount;
@@ -423,15 +423,15 @@ int convertLevelToDAE(std::string outputFolder, std::string inputFile)
 	unsigned int vertexColourStartAddress;
 	unsigned int materialStartAddress;
 
-	reader.read((char*)&BSPTreeStartAddress, sizeof(BSPTreeStartAddress));
-	reader.seekg(0x14, reader.cur);
-	reader.read((char*)&vertexCount, sizeof(vertexCount));
-	reader.read((char*)&polygonCount, sizeof(polygonCount));
-	reader.read((char*)&vertexColourCount, sizeof(vertexColourCount));
-	reader.read((char*)&vertexStartAddress, sizeof(vertexStartAddress));
-	reader.read((char*)&polygonStartAddress, sizeof(polygonStartAddress));
-	reader.read((char*)&vertexColourStartAddress, sizeof(vertexColourStartAddress));
-	reader.read((char*)&materialStartAddress, sizeof(materialStartAddress));
+	g_reader.read((char*)&BSPTreeStartAddress, sizeof(BSPTreeStartAddress));
+	g_reader.seekg(0x14, g_reader.cur);
+	g_reader.read((char*)&vertexCount, sizeof(vertexCount));
+	g_reader.read((char*)&polygonCount, sizeof(polygonCount));
+	g_reader.read((char*)&vertexColourCount, sizeof(vertexColourCount));
+	g_reader.read((char*)&vertexStartAddress, sizeof(vertexStartAddress));
+	g_reader.read((char*)&polygonStartAddress, sizeof(polygonStartAddress));
+	g_reader.read((char*)&vertexColourStartAddress, sizeof(vertexColourStartAddress));
+	g_reader.read((char*)&materialStartAddress, sizeof(materialStartAddress));
 
 	std::vector<Vertex> vertices;
 
@@ -442,11 +442,11 @@ int convertLevelToDAE(std::string outputFolder, std::string inputFile)
 	std::vector<PolygonStruct> polygons;
 	std::vector<Material> materials;
 
-	std::filesystem::create_directory(outputFolder);
+	std::filesystem::create_directory(g_outputFolder);
 
-	readPolygons(objectName, outputFolder, polygonCount, polygonStartAddress, materialStartAddress, false, polygons, materials, vertices);
+	readPolygons(objectName, polygonCount, polygonStartAddress, materialStartAddress, false, polygons, materials, vertices);
 
-	int exportReturn = exportToXML(outputFolder, objectName, polygons, materials);
+	int exportReturn = exportToXML(objectName, polygons, materials);
 
 	return exportReturn;
 }

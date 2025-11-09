@@ -20,10 +20,10 @@
 
 #include "ModelStructs.h"
 
-#include <iostream>
 #include <vector>
+#include <string>
 
-int exportToXML(std::string outputFolder, std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
+int exportToXML(std::string objectName, std::vector<PolygonStruct>& polygons, std::vector<Material>& materials);
 
 int exportTexture(tinyxml2::XMLDocument& outputDAE, tinyxml2::XMLElement* library_images, Material exportMaterial, std::string objectName);
 
@@ -48,3 +48,4 @@ int exportVertices(tinyxml2::XMLDocument& outputDAE, tinyxml2::XMLElement* mesh,
 int exportPolygons(tinyxml2::XMLDocument& outputDAE, tinyxml2::XMLElement* mesh, unsigned int meshPolygonsSize, int materialID);
 
 int exportVisualScene(tinyxml2::XMLDocument& outputDAE, tinyxml2::XMLElement* nodeModel, int materialID, std::string objectName);
+

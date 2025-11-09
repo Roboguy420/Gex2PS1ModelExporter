@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-void readPolygons(std::string objectName, std::string outputFolder, unsigned short int polygonCount,
+void readPolygons(std::string objectName, unsigned short int polygonCount,
     unsigned int polygonStartAddress, unsigned int textureAnimationsStartAddress, bool isObject, std::vector<PolygonStruct>& polygons,
     std::vector<Material>& materials, std::vector<Vertex>& vertices);
 
@@ -43,8 +43,8 @@ std::vector<LevelAnimationSubframe> readLevelAnimationSubFrames(unsigned int tex
 
 LevelAnimationSubframe* readLevelAnimationSubFrame(unsigned int baseMaterialAddress);
 
-bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, std::string outputFolder, Material thisMaterial,
+bool UVPointCorrectionAndExport(unsigned int materialID, bool isObject, std::string objectName, Material thisMaterial,
     std::vector<PolygonStruct>& polygons, bool exportLevelAnimations, std::vector<LevelAnimationSubframe>& levelSubframes);
 
 bool objectSubframePointCorrectionAndExport(unsigned int materialID, unsigned int textureID, std::string objectName,
-    std::string outputFolder, ObjectAnimationSubframe subframe);
+    ObjectAnimationSubframe subframe);

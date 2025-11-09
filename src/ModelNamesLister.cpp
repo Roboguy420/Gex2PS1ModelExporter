@@ -14,41 +14,40 @@
     You should have received a copy of the GNU General Public License
     along with Gex2PS1ModelExporter.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#include "SharedFunctions.h"
 #include "Constants.h"
 #include "Globals.h"
 
-#include <filesystem>
+#include <iostream>
 
 int listNames(unsigned int modelsAddressesStart)
 {
-	reader.seekg(modelsAddressesStart, reader.beg);
+	g_reader.seekg(modelsAddressesStart, g_reader.beg);
 
 	int nameIterator = 1;
 	while (true)
 	{
 		unsigned int specificObjectAddress;
-		reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
+		g_reader.read((char*)&specificObjectAddress, sizeof(specificObjectAddress));
 
 		if (specificObjectAddress == modelsAddressesStart)
 		{
 			break;
 		}
 
-		long int nextPos = reader.tellg();
+		long int nextPos = g_reader.tellg();
 
 		if (nameIterator == 8192)
 			break;
 
-		reader.seekg(specificObjectAddress + 0x24, reader.beg);
+		g_reader.seekg(specificObjectAddress + 0x24, g_reader.beg);
 		unsigned int objNameAddr;
-		reader.read((char*)&objNameAddr, sizeof(objNameAddr));
-		reader.seekg(objNameAddr, reader.beg);
+		g_reader.read((char*)&objNameAddr, sizeof(objNameAddr));
+		g_reader.seekg(objNameAddr, g_reader.beg);
 		std::string objName;
 		for (int i = 0; i < 8; i++)
 		{
 			char objNameChar;
-			reader.read((char*)&objNameChar, 1);
+			g_reader.read((char*)&objNameChar, 1);
 			objName += objNameChar;
 		}
 
@@ -56,7 +55,7 @@ int listNames(unsigned int modelsAddressesStart)
 
 		nameIterator++;
 
-		reader.seekg(nextPos, reader.beg);
+		g_reader.seekg(nextPos, g_reader.beg);
 	}
 
 	std::cout << "Exit Code 0: Successful listing with no errors" << std::endl;

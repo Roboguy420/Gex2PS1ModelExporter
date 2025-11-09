@@ -18,6 +18,7 @@
 
 #include "SharedFunctions.h"
 #include "TextureExporter.h"
+#include "Globals.h"
 
 #include <filesystem>
 #include <format>
@@ -85,7 +86,7 @@ int copyRectangleInVRM(unsigned short int xCoordinateDestination, unsigned short
 }
 
 int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right,
-	unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex,
+	unsigned int south, unsigned int north, std::string objectName, unsigned int textureIndex,
 	unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes)
 {
 	// Initialise texture page
@@ -247,7 +248,7 @@ int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int c
 		textureIndexString += std::format("-{}", subframe);
 	}
 
-	writeFile = fopen(std::format("{}{}{}-tex{}.png", outputFolder, directorySeparator(), objectName, textureIndexString).c_str(), "wb");
+	writeFile = fopen(std::format("{}{}{}-tex{}.png", g_outputFolder, directorySeparator(), objectName, textureIndexString).c_str(), "wb");
 	if (!writeFile)
 	{
 		for (int y = 0; y < 256; y++)

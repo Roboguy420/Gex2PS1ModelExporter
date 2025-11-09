@@ -21,7 +21,7 @@
 #include <string>
 
 int goToTexPageAndApplyCLUT(unsigned short int texturePage, unsigned short int clutValue, unsigned int left, unsigned int right,
-    unsigned int south, unsigned int north, std::string objectName, std::string outputFolder, unsigned int textureIndex,
+    unsigned int south, unsigned int north, std::string objectName, unsigned int textureIndex,
     unsigned int materialIndex, unsigned int subframe, std::vector<LevelAnimationSubframe>& levelSubframes);
 
 bool resetModifiedVRAM();

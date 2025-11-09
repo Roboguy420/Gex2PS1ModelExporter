@@ -18,8 +18,6 @@
 
 #include "ModelStructs.h"
 
-#include <iostream>
-
 void readVertices(unsigned short int vertexCount, unsigned int vertexStartAddress, unsigned short int boneCount,
     unsigned int boneStartAddress, bool isObject, std::vector<Vertex>& vertices);
 

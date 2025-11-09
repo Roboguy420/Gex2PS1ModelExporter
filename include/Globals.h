@@ -20,7 +20,10 @@
 
 // Uninitialised (.bss)
 
-extern std::ifstream reader;
+extern std::ifstream g_reader;
+
+extern std::string g_outputFolder;
+extern std::string g_inputFile;
 
 // Initialised (.data)
 

@@ -18,6 +18,10 @@
 
 // Uninitialised (.bss)
 
-std::ifstream reader;
+std::ifstream g_reader;
+
+std::string g_outputFolder;
+std::string g_inputFile;
 
 // Initialised (.data)
+

@@ -18,9 +18,9 @@
 
 #include <string>
 
-int readFile(std::string inputFile, std::string outputFolder, int selectedModelExport, bool listNamesBool,
+int readFile(int selectedModelExport, bool listNamesBool,
 	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully);
 
-int convertObjToDAE(std::string outputFolder, std::string objectName, std::string inputFile);
+int convertObjToDAE(std::string objectName);
 
-int convertLevelToDAE(std::string outputFolder, std::string inputFile);
+int convertLevelToDAE();

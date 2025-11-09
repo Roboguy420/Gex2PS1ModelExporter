@@ -24,13 +24,13 @@ void readVertices(unsigned short int vertexCount, unsigned int vertexStartAddres
 {
 	if (vertexStartAddress == 0 || vertexCount == 0) { return; }
 
-	reader.seekg(vertexStartAddress, reader.beg);
+	g_reader.seekg(vertexStartAddress, g_reader.beg);
 
 	for (unsigned int v = 0; v < vertexCount; v++)
 	{
-		unsigned int uPolygonPosition = reader.tellg();
+		unsigned int uPolygonPosition = g_reader.tellg();
 		vertices.push_back(readVertex(v));
-		reader.seekg(uPolygonPosition + 0xC, reader.beg);
+		g_reader.seekg(uPolygonPosition + 0xC, g_reader.beg);
 	}
 
 	if (isObject)
@@ -53,9 +53,9 @@ Vertex readVertex(unsigned int v)
 	short int y;
 	short int z;
 
-	reader.read((char*)&x, 2);
-	reader.read((char*)&y, 2);
-	reader.read((char*)&z, 2);
+	g_reader.read((char*)&x, 2);
+	g_reader.read((char*)&y, 2);
+	g_reader.read((char*)&z, 2);
 
 	thisVertex.rawX = x;
 	thisVertex.rawY = y;
@@ -64,7 +64,7 @@ Vertex readVertex(unsigned int v)
 	thisVertex.finalY = y;
 	thisVertex.finalZ = z;
 
-	reader.read((char*)&thisVertex.normalID, 2);
+	g_reader.read((char*)&thisVertex.normalID, 2);
 
 	return thisVertex;
 }
@@ -76,7 +76,7 @@ void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, s
 {
 	if (boneStartAddress == 0 || boneCount == 0) { return; }
 
-	reader.seekg(boneStartAddress, reader.beg);
+	g_reader.seekg(boneStartAddress, g_reader.beg);
 
 	for (unsigned short int b = 0; b < boneCount; b++)
 	{
@@ -91,14 +91,14 @@ void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, s
 
 	for (unsigned short int b = 0; b < boneCount; b++)
 	{
-		reader.seekg(8, reader.cur);
+		g_reader.seekg(8, g_reader.cur);
 
-		reader.read((char*)&bones[b].vFirst, sizeof(bones[b].vFirst));
-		reader.read((char*)&bones[b].vLast, sizeof(bones[b].vLast));
-		reader.read((char*)&bones[b].localX, 2);
-		reader.read((char*)&bones[b].localY, 2);
-		reader.read((char*)&bones[b].localZ, 2);
-		reader.read((char*)&bones[b].parentID, sizeof(bones[b].parentID));
+		g_reader.read((char*)&bones[b].vFirst, sizeof(bones[b].vFirst));
+		g_reader.read((char*)&bones[b].vLast, sizeof(bones[b].vLast));
+		g_reader.read((char*)&bones[b].localX, 2);
+		g_reader.read((char*)&bones[b].localY, 2);
+		g_reader.read((char*)&bones[b].localZ, 2);
+		g_reader.read((char*)&bones[b].parentID, sizeof(bones[b].parentID));
 
 		bones[b].worldX = 0.0f;
 		bones[b].worldY = 0.0f;
@@ -116,7 +116,7 @@ void readArmature(unsigned short int boneCount, unsigned int boneStartAddress, s
 			}
 		}
 
-		reader.seekg(4, reader.cur);
+		g_reader.seekg(4, g_reader.cur);
 	}
 }
 
