@@ -25,3 +25,11 @@ std::string g_inputFile;
 
 // Initialised (.data)
 
+bool g_modelFailedToExport = false;
+bool g_textureFailedToExport = false;
+bool g_atLeastOneExportedSuccessfully = false;
+
+bool g_listNames = false;
+
+int g_selectedModelExport = -1;
+

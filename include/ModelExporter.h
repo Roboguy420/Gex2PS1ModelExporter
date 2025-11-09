@@ -18,8 +18,7 @@
 
 #include <string>
 
-int readFile(int selectedModelExport, bool listNamesBool,
-	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully);
+int readFile();
 
 int convertObjToDAE(std::string objectName);
 

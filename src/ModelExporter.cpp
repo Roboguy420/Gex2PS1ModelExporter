@@ -42,10 +42,6 @@ int main(int argc, char* argv[])
 	// Selected export -1 = everything
 	// Selected export 0 = level geometry
 	// Selected export >0 = other object models
-	int selectedModelExport = -1;
-
-	bool listNamesBool = false;
-
 	static struct option long_options[] =
 	{
 		{"out", required_argument, 0, 'o'},
@@ -63,7 +59,7 @@ int main(int argc, char* argv[])
 				g_outputFolder = optarg;
 				break;
 			case 'i':
-				if ((selectedModelExport = stringToInt(optarg, -2)) < -1)
+				if ((g_selectedModelExport = stringToInt(optarg, -2)) < -1)
 				{
 					std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
 					std::cerr << std::format("Error {}: Selected model index is invalid", EXIT_INDEX_FAILED_PARSE) << std::endl;
@@ -71,7 +67,7 @@ int main(int argc, char* argv[])
 				}
 				break;
 			case 'l':
-				listNamesBool = true;
+				g_listNames = true;
 				break;
 			default:
 				std::cerr << "Usage: gex2ps1modelexporter file [-o --out folder] [-i --index number] [-l --list]" << std::endl;
@@ -116,13 +112,7 @@ int main(int argc, char* argv[])
 
 	g_outputFolder = g_outputFolder + directorySeparator() + getFileNameWithoutExtension(g_inputFile, false);
 
-	bool modelFailedToExport = false;
-	bool textureFailedToExport = false;
-	bool atLeastOneExportedSuccessfully = false;
-
-
-	switch (readFile(selectedModelExport, listNamesBool,
-		modelFailedToExport, textureFailedToExport, atLeastOneExportedSuccessfully))
+	switch (readFile())
 	{
 		case 1:
 			// End of stream exception
@@ -139,21 +129,21 @@ int main(int argc, char* argv[])
 	}
 	
 
-	if (listNamesBool)
+	if (g_listNames)
 		return EXIT_SUCCESSFUL_EXPORT;
 	
-	if (!atLeastOneExportedSuccessfully)
+	if (!g_atLeastOneExportedSuccessfully)
 	{
 		// No models were successfully exported
 		std::cerr << std::format("Error {}: No models were exported successfully", EXIT_ALL_MODELS_FAILED_EXPORT) << std::endl;
 		return EXIT_ALL_MODELS_FAILED_EXPORT;
 	}
-	if (modelFailedToExport)
+	if (g_modelFailedToExport)
 	{
 		std::cerr << std::format("Error {}: At least one model failed to export", EXIT_SOME_MODELS_FAILED_EXPORT) << std::endl;
 		return EXIT_SOME_MODELS_FAILED_EXPORT;
 	}
-	if (textureFailedToExport)
+	if (g_textureFailedToExport)
 	{
 		std::cerr << std::format("Error {}: At least one texture failed to export", EXIT_SOME_TEXTURES_FAILED_EXPORT) << std::endl;
 		return EXIT_SOME_TEXTURES_FAILED_EXPORT;
@@ -164,8 +154,7 @@ int main(int argc, char* argv[])
 
 
 
-int readFile(int selectedModelExport, bool listNamesBool,
-	bool& modelFailedToExport, bool& textureFailedToExport, bool& atLeastOneExportedSuccessfully)
+int readFile()
 {
 	unsigned int modelsAddressesStart;
 
@@ -204,7 +193,7 @@ int readFile(int selectedModelExport, bool listNamesBool,
 		g_reader.read((char*)&modelsAddressesStart, sizeof(modelsAddressesStart));
 		g_reader.seekg(modelsAddressesStart, g_reader.beg);
 
-		if (listNamesBool)
+		if (g_listNames)
 		{
 			// Break out of sequence entirely, only list names, do not export any models afterwards
 			int listNamesReturn = listNames(modelsAddressesStart);
@@ -223,7 +212,7 @@ int readFile(int selectedModelExport, bool listNamesBool,
 
 	unsigned int objIndex = 0;
 
-	while (selectedModelExport != 0)
+	while (g_selectedModelExport != 0)
 	{
 		unsigned int specificObjectAddress;
 		long int nextPos;
@@ -249,7 +238,7 @@ int readFile(int selectedModelExport, bool listNamesBool,
 		if (objIndex == 8192)
 			break;
 
-		if (objIndex == selectedModelExport || selectedModelExport == -1)
+		if (objIndex == g_selectedModelExport || g_selectedModelExport == -1)
 		{
 			std::string objName;
 			unsigned short int objectCount;
@@ -308,27 +297,27 @@ int readFile(int selectedModelExport, bool listNamesBool,
 					objectReturnCode = 2;
 				}
 
-				if (!textureFailedToExport && !modelFailedToExport && objectReturnCode == 1)
-					textureFailedToExport = true;
+				if (!g_textureFailedToExport && !g_modelFailedToExport && objectReturnCode == 1)
+					g_textureFailedToExport = true;
 
 				if (objectReturnCode == 2)
 				{
 					// Model failed to export
 					std::cerr << std::format("	Export Error: Model {} failed to export", objectNameAndIndex) << std::endl;
-					modelFailedToExport = true;
+					g_modelFailedToExport = true;
 				}
 				else
 				{
-					atLeastOneExportedSuccessfully = true;
+					g_atLeastOneExportedSuccessfully = true;
 					std::cout << std::format("	Successfully exported {}", objectNameAndIndex) << std::endl;
 				}
 			}
-			if (objIndex == selectedModelExport) { break; }
+			if (objIndex == g_selectedModelExport) { break; }
 		}
 
 		g_reader.seekg(nextPos, g_reader.beg);
 	}
-	if (selectedModelExport < 1)
+	if (g_selectedModelExport < 1)
 	{
 		int levelReturnCode;
 		std::cout << std::format("Reading level geometry model {}...", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
@@ -346,21 +335,21 @@ int readFile(int selectedModelExport, bool listNamesBool,
 			levelReturnCode = 2;
 		}
 
-		if (!textureFailedToExport && !modelFailedToExport && levelReturnCode == 1)
+		if (!g_textureFailedToExport && !g_modelFailedToExport && levelReturnCode == 1)
 		{
 			// At least 1 texture failed to export
-			textureFailedToExport = true;
+			g_textureFailedToExport = true;
 		}
 
 		if (levelReturnCode == 2)
 		{
 			// Model failed to export
 			std::cerr << std::format("	Export Error: Level geometry {} failed to export", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
-			modelFailedToExport = true;
+			g_modelFailedToExport = true;
 		}
 		else
 		{
-			atLeastOneExportedSuccessfully = true;
+			g_atLeastOneExportedSuccessfully = true;
 			std::cout << std::format("	Successfully exported level geometry {}", getFileNameWithoutExtension(g_inputFile, false)) << std::endl;
 		}
 	}

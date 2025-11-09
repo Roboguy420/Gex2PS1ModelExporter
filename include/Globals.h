@@ -27,4 +27,11 @@ extern std::string g_inputFile;
 
 // Initialised (.data)
 
+extern bool g_modelFailedToExport;
+extern bool g_textureFailedToExport;
+extern bool g_atLeastOneExportedSuccessfully;
+
+extern bool g_listNames;
+
+extern int g_selectedModelExport;
 
